@@ -1,0 +1,10 @@
+DebugMode: false
+KickMessage: Sorry, you are not on the whitelist!
+SqlEnable: false
+SqlDriver: com.mysql.jdbc.Driver
+SqlDriverConnection: jdbc:mysql://localhost/DATABASENAME?user=USERNAME&password=PASSWORD
+SqlQuery: ""
+SqlQueryList: ""
+SqlQueryAdd: ""
+SqlQueryRemove: ""
+SqlDriverJar: ""

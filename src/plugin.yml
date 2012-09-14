@@ -1,6 +1,6 @@
 name: Whitelist
-main: net.immortal_forces.silence.plugin.whitelist.Whitelist
-version: 2.7b
+main: me.cnaude.plugin.AutoWhitelist.Whitelist
+version: 3.1
 commands:
   whitelist:
     description: All whitelist commands
@@ -10,3 +10,9 @@ commands:
       /<command> remove [player] - removes a player from the whitelist
       /<command> on|off - actives/deactivates whitelist
       /<command> list - list whitelist entries
+      /<command> dblist - list users in database
+      
+permissions:
+  whitelist.admin:
+    default: false
+    description: Provides admin access to this plugin

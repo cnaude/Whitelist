@@ -1,4 +1,4 @@
-package net.immortal_forces.silence.plugin.whitelist;
+package me.cnaude.plugin.AutoWhitelist;
 
 import java.io.File;
 import java.util.TimerTask;
@@ -14,6 +14,7 @@ public class FileWatcher extends TimerTask {
         this.m_LastModified = this.m_File.lastModified();
     }
 
+    @Override
     public void run() {
         if (this.m_LastModified != this.m_File.lastModified()) {
             this.m_LastModified = this.m_File.lastModified();

@@ -1,113 +1,79 @@
-package net.immortal_forces.silence.plugin.whitelist;
+package me.cnaude.plugin.AutoWhitelist;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Properties;
 import java.util.Timer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Whitelist extends JavaPlugin {
 
-    private final String PROP_KICKMESSAGE = "kick-message";
-    private final String PROP_WHITELIST_ADMINS = "whitelist-admins";
-    private final String PROP_DISABLE_LIST = "disable-list-command";
-    private final String PROP_USE_SQL = "sql-enable";
-    private final String PROP_SQL_DRIVER_JAR = "sql-driver-jar";
-    private final String PROP_SQL_DRIVER = "sql-driver";
-    private final String PROP_SQL_CONNECTION = "sql-driver-connection";
-    private final String PROP_SQL_QUERY = "sql-query";
-    private final String PROP_SQL_QUERY_ADD = "sql-query-add";
-    private final String PROP_SQL_QUERY_REMOVE = "sql-query-remove";
-    private final String FILE_WHITELIST = "whitelist.txt";
-    private final String FILE_CONFIG = "whitelist.properties";
+    private static WLConfig config;    
     private final WLPlayerListener m_PlayerListner = new WLPlayerListener(this);
+    
     private FileWatcher m_Watcher;
     private Timer m_Timer;
     private File m_Folder;
     private boolean m_bWhitelistActive;
-    private SQLConnection m_SqlConnection;
-    private ArrayList<String> m_SettingsWhitelistAdmins;
+    private SQLConnection m_SqlConnection;    
     private ArrayList<String> m_SettingsWhitelistAllow;
-    private String m_strSettingsKickMessage;
-    private boolean m_bSettingsListCommandDisabled;
-    private boolean m_bSettingsSqlEnabled;
-    private String m_strSettingsSqlDriverJar;
-    private String m_strSettingsSqlDriver;
-    private String m_strSettingsSqlConnection;
-    private String m_strSettingsSqlQuery;
-    private String m_strSettingsSqlQueryAdd;
-    private String m_strSettingsSqlQueryRemove;
+    private boolean configLoaded = false;
+    
+    static final Logger log = Logger.getLogger("Minecraft");
+    public static final String PLUGIN_NAME = "AutoWhitelist";
+    public static final String LOG_HEADER = "[" + PLUGIN_NAME + "]";
 
     @Override
     public void onEnable() {
-        this.m_Folder = getDataFolder();
-        this.m_strSettingsKickMessage = "";
-        this.m_SettingsWhitelistAdmins = new ArrayList();
+        this.m_Folder = getDataFolder();        
         this.m_SettingsWhitelistAllow = new ArrayList();
         this.m_bWhitelistActive = true;
-        this.m_bSettingsListCommandDisabled = false;
-        this.m_bSettingsSqlEnabled = false;
-        this.m_strSettingsSqlDriverJar = "";
-        this.m_strSettingsSqlDriver = "";
-        this.m_strSettingsSqlConnection = "";
-        this.m_strSettingsSqlQuery = "";
-        this.m_strSettingsSqlQueryAdd = "";
-        this.m_strSettingsSqlQueryRemove = "";
-        this.m_SqlConnection = null;
+        this.m_SqlConnection = null;   
 
-        PluginManager pm = getServer().getPluginManager();
-
+        loadWhitelistSettings();
+        
         getServer().getPluginManager().registerEvents(m_PlayerListner, this);
 
-        if (!this.m_Folder.exists()) {
-            System.out.print("Whitelist: Config folder missing, creating...");
-            this.m_Folder.mkdir();
-            System.out.println("done.");
-        }
         File fWhitelist = new File(this.m_Folder.getAbsolutePath() + File.separator + "whitelist.txt");
         if (!fWhitelist.exists()) {
-            System.out.print("Whitelist: Whitelist is missing, creating...");
+            logInfo("Whitelist: Whitelist is missing, creating...");
             try {
                 fWhitelist.createNewFile();
-                System.out.println("done.");
+                logDebug("Done.");
             } catch (IOException ex) {
-                System.out.println("failed.");
+                logDebug("Failed. [" + ex.getMessage() + "]");
             }
         }
 
         this.m_Watcher = new FileWatcher(fWhitelist);
         this.m_Timer = new Timer(true);
         this.m_Timer.schedule(this.m_Watcher, 0L, 1000L);
-
-        File fConfig = new File(this.m_Folder.getAbsolutePath() + File.separator + "whitelist.properties");
-        if (!fConfig.exists()) {
-            System.out.print("Whitelist: Config is missing, creating...");
-            try {
-                fConfig.createNewFile();
-                Properties propConfig = new Properties();
-                propConfig.setProperty("kick-message", "Sorry, you are not on the whitelist!");
-                propConfig.setProperty("whitelist-admins", "Name1,Name2,Name3");
-                propConfig.setProperty("disable-list-command", "false");
-
-                BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(fConfig.getAbsolutePath()));
-                propConfig.store(stream, "Auto generated config file, please modify");
-                System.out.println("done.");
-            } catch (IOException ex) {
-                System.out.println("failed.");
-            }
-        }
-        loadWhitelistSettings();
+        
+        
 
         PluginDescriptionFile pdfFile = getDescription();
-        System.out.println(pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled!");
+        logDebug(pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled!");
+    }
+    
+        public void logInfo(String _message) {
+        log.log(Level.INFO, String.format("%s %s", LOG_HEADER, _message));
+    }
+
+    public void logDebug(String _message) {
+        if (config.debugMode()) {
+            log.log(Level.INFO, String.format("%s [DEBUG] %s", LOG_HEADER, _message));
+        }
+    }
+    
+    public WLConfig getWLConfig() {
+        return config;
     }
 
     @Override
@@ -115,19 +81,17 @@ public class Whitelist extends JavaPlugin {
         this.m_Timer.cancel();
         this.m_Timer.purge();
         this.m_Timer = null;
-        System.out.println("Goodbye world!");
+        logDebug("Goodbye world!");
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
-        Player player = null;
-        try {
-            player = (Player) sender;
-        } catch (Exception e) {
-        }
-
-        if (player != null) {
-            if (!isAdmin(player.getName())) {
+        Player player;
+        String noPermission = ChatColor.RED + "You do not have permission to run this command!";
+        if (sender instanceof Player) {
+            player = (Player)sender;
+            if (!isAdmin(player)) {
+                player.sendMessage(noPermission);
                 return true;
             }
         }
@@ -135,13 +99,7 @@ public class Whitelist extends JavaPlugin {
             return false;
         }
         if (args[0].compareToIgnoreCase("help") == 0) {
-            sender.sendMessage(ChatColor.YELLOW + "Commands:");
-            sender.sendMessage(ChatColor.YELLOW + "/whitelist reload  (reloads the whitelist and settings)");
-            sender.sendMessage(ChatColor.YELLOW + "/whitelist add [player]  (adds a player to the whitelist)");
-            sender.sendMessage(ChatColor.YELLOW + "/whitelist remove [player]  (removes a player from the whitelist)");
-            sender.sendMessage(ChatColor.YELLOW + "/whitelist on|off  (actives/deactivates whitelist)");
-            sender.sendMessage(ChatColor.YELLOW + "/whitelist list  (list whitelist entries)");
-            return true;
+            return false;
         }
         if (args[0].compareToIgnoreCase("reload") == 0) {
             if (reloadSettings()) {
@@ -181,17 +139,17 @@ public class Whitelist extends JavaPlugin {
             sender.sendMessage(ChatColor.RED + "Whitelist deactivated!");
             return true;
         }
+        if (args[0].compareToIgnoreCase("dblist") == 0) {
+            printDBUserList(sender);
+            return true;
+        }
         if (args[0].compareToIgnoreCase("list") == 0) {
-            if (!isListCommandDisabled()) {
-                sender.sendMessage(ChatColor.RED + "List command is disabled!");
-            } else {
-                sender.sendMessage(ChatColor.YELLOW + "Players on whitelist: " + ChatColor.GRAY + getFormatedAllowList());
-            }
+            sender.sendMessage(ChatColor.YELLOW + "Players on whitelist: " + ChatColor.GRAY + getFormatedAllowList());
             return true;
         }
         return false;
-    }
-
+    }   
+    
     public String colorSet(String finishedProduct) {
         Pattern blackColor = Pattern.compile("[^&]&0", Pattern.CASE_INSENSITIVE);
         Pattern blueColor = Pattern.compile("&1", Pattern.CASE_INSENSITIVE);
@@ -218,7 +176,6 @@ public class Whitelist extends JavaPlugin {
         Pattern resetColor = Pattern.compile("&r", Pattern.CASE_INSENSITIVE);
 
         Pattern escapeCode = Pattern.compile("&§|&&");
-
 
         finishedProduct = blackColor.matcher(finishedProduct).replaceAll(ChatColor.BLACK.toString());
         finishedProduct = blueColor.matcher(finishedProduct).replaceAll(ChatColor.DARK_BLUE.toString());
@@ -248,77 +205,48 @@ public class Whitelist extends JavaPlugin {
 
         return finishedProduct;
     }
-
+    
     public boolean loadWhitelistSettings() {
-        System.out.print("Whitelist: Trying to load whitelist and settings...");
+        logInfo("Trying to load whitelist and configuration...");
+        
+        if (!this.configLoaded) {
+            getConfig().options().copyDefaults(true);
+            saveConfig();
+            logInfo("Configuration loaded.");
+            config = new WLConfig(this);
+        } else {
+            reloadConfig();
+            getConfig().options().copyDefaults(false);
+            config = new WLConfig(this);
+            logInfo("Configuration reloaded.");
+        }
+        configLoaded = true;
+        
         try {
-            this.m_SettingsWhitelistAllow.clear();
+            this.m_SettingsWhitelistAllow.clear();            
+            logDebug("Reading whitelist.txt");
             BufferedReader reader = new BufferedReader(new FileReader(this.m_Folder.getAbsolutePath() + File.separator + "whitelist.txt"));
             String line = reader.readLine();
             while (line != null) {
+                logDebug("Adding " + line + " to allow list.");
                 this.m_SettingsWhitelistAllow.add(line);
                 line = reader.readLine();
             }
-            reader.close();
-
-            Properties propConfig = new Properties();
-            BufferedInputStream stream = new BufferedInputStream(new FileInputStream(this.m_Folder.getAbsolutePath() + File.separator + "whitelist.properties"));
-            propConfig.load(stream);
-            this.m_strSettingsKickMessage = colorSet(propConfig.getProperty("kick-message"));
-            if (this.m_strSettingsKickMessage == null) {
-                this.m_strSettingsKickMessage = "";
-            }
-            this.m_SettingsWhitelistAdmins.clear();
-            String rawAdminList = propConfig.getProperty("whitelist-admins");
-            if (rawAdminList != null) {
-                String[] admins = rawAdminList.split(",");
-                if (admins != null) {
-                    this.m_SettingsWhitelistAdmins.addAll(Arrays.asList(admins));
-                }
-            }
-            String rawDisableListCommand = propConfig.getProperty("disable-list-command");
-            if (rawDisableListCommand != null) {
-                this.m_bSettingsListCommandDisabled = Boolean.parseBoolean(rawDisableListCommand);
-            }
-            String rawUseSql = propConfig.getProperty("sql-enable");
-            if (rawUseSql != null) {
-                this.m_bSettingsSqlEnabled = Boolean.parseBoolean(rawUseSql);
-            }
-            this.m_strSettingsSqlDriver = propConfig.getProperty("sql-driver");
-            if (this.m_strSettingsSqlDriver == null) {
-                this.m_strSettingsSqlDriver = "";
-            }
-            this.m_strSettingsSqlConnection = propConfig.getProperty("sql-driver-connection");
-            if (this.m_strSettingsSqlConnection == null) {
-                this.m_strSettingsSqlConnection = "";
-            }
-            this.m_strSettingsSqlQuery = propConfig.getProperty("sql-query");
-            if (this.m_strSettingsSqlQuery == null) {
-                this.m_strSettingsSqlQuery = "";
-            }
-            this.m_strSettingsSqlQueryAdd = propConfig.getProperty("sql-query-add");
-            if (this.m_strSettingsSqlQueryAdd == null) {
-                this.m_strSettingsSqlQueryAdd = "";
-            }
-            this.m_strSettingsSqlQueryRemove = propConfig.getProperty("sql-query-remove");
-            if (this.m_strSettingsSqlQueryRemove == null) {
-                this.m_strSettingsSqlQueryRemove = "";
-            }
-            this.m_strSettingsSqlDriverJar = propConfig.getProperty("sql-driver-jar");
-            if (this.m_bSettingsSqlEnabled) {
-                this.m_SqlConnection = new SQLConnection(this.m_strSettingsSqlDriver, this.m_strSettingsSqlConnection, this.m_strSettingsSqlQuery, this.m_strSettingsSqlQueryAdd, this.m_strSettingsSqlQueryRemove, this.m_strSettingsSqlDriverJar);
+            reader.close();           
+            
+            if (config.sqlEnabled()) {
+                this.m_SqlConnection = new SQLConnection(this);                        
             } else {
                 if (this.m_SqlConnection != null) {
                     this.m_SqlConnection.Cleanup();
                 }
                 this.m_SqlConnection = null;
-            }
-
-            System.out.println("done.");
+            }            
         } catch (Exception ex) {
-            System.out.println("failed: " + ex);
+            logDebug("Failed: " + ex.getMessage());
             return false;
-        }
+        }        
+                        
         return true;
     }
 
@@ -331,37 +259,32 @@ public class Whitelist extends JavaPlugin {
             }
             writer.close();
         } catch (Exception ex) {
-            System.out.println(ex);
+            logDebug(ex.getMessage());
             return false;
         }
         return true;
     }
 
-    public boolean isAdmin(String playerName) {
-        for (String admin : this.m_SettingsWhitelistAdmins) {
-            if (admin.compareToIgnoreCase(playerName) == 0) {
-                return true;
-            }
-        }
-        return false;
+    public boolean isAdmin(Player player) {
+        return player.hasPermission("whitelist.admin");        
     }
 
     public boolean isOnWhitelist(String playerName) {
-        if ((this.m_bSettingsSqlEnabled) && (this.m_SqlConnection != null)) {
-            return this.m_SqlConnection.isOnWhitelist(playerName, true);
-        }
-
         for (String player : this.m_SettingsWhitelistAllow) {
             if (player.compareToIgnoreCase(playerName) == 0) {
                 return true;
             }
+        }
+                
+        if ((config.sqlEnabled()) && (this.m_SqlConnection != null)) {
+            return this.m_SqlConnection.isOnWhitelist(playerName, true);
         }
 
         return false;
     }
 
     public boolean addPlayerToWhitelist(String playerName) {
-        if (this.m_SqlConnection != null) {
+        if ((!config.sqlQueryAdd().isEmpty()) && (this.m_SqlConnection != null)) {
             if (!isOnWhitelist(playerName)) {
                 return this.m_SqlConnection.addPlayerToWhitelist(playerName, true);
             }
@@ -373,9 +296,16 @@ public class Whitelist extends JavaPlugin {
 
         return false;
     }
+    
+    public boolean printDBUserList(CommandSender sender) {
+        if (this.m_SqlConnection != null) {
+            return this.m_SqlConnection.printDBUserList(sender);   
+        } 
+        return false;
+    }
 
     public boolean removePlayerFromWhitelist(String playerName) {
-        if (this.m_SqlConnection != null) {
+        if (!config.sqlQueryRemove().isEmpty() &&  this.m_SqlConnection != null) {
             if (isOnWhitelist(playerName)) {
                 return this.m_SqlConnection.removePlayerFromWhitelist(playerName, true);
             }
@@ -396,10 +326,6 @@ public class Whitelist extends JavaPlugin {
         return loadWhitelistSettings();
     }
 
-    public String getKickMessage() {
-        return this.m_strSettingsKickMessage;
-    }
-
     public String getFormatedAllowList() {
         String result = "";
         for (String player : this.m_SettingsWhitelistAllow) {
@@ -417,13 +343,6 @@ public class Whitelist extends JavaPlugin {
 
     public void setWhitelistActive(boolean isWhitelistActive) {
         this.m_bWhitelistActive = isWhitelistActive;
-    }
-
-    public boolean isListCommandDisabled() {
-        if (this.m_SqlConnection != null) {
-            return false;
-        }
-        return this.m_bSettingsListCommandDisabled;
     }
 
     public boolean needReloadWhitelist() {
