@@ -1,10 +1,11 @@
 DebugMode: false
-KickMessage: Sorry, you are not on the whitelist!
+FileCheckInterval: 1000
+KickMessage: "&bSorry! you are not on the &fwhitelist!"
 SqlEnable: false
-SqlDriver: com.mysql.jdbc.Driver
+SqlDriver: "com.mysql.jdbc.Driver"
 SqlDriverConnection: jdbc:mysql://localhost/DATABASENAME?user=USERNAME&password=PASSWORD
-SqlQuery: ""
-SqlQueryList: ""
-SqlQueryAdd: ""
-SqlQueryRemove: ""
-SqlDriverJar: ""
+SqlQuery: "SELECT name FROM tbl_names WHERE name='<%USERNAME%>'"
+SqlQueryList: "SELECT name FROM tbl_names"
+SqlQueryAdd: "INSERT INTO tbl_users (name) VALUES ('<%USERNAME%>')"
+SqlQueryRemove: "DELETE FROM tbl_users WHERE Name='<%USERNAME%>'"
+SqlDriverJar: "lib/mysql-connector-java-bin.jar"

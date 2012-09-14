@@ -14,6 +14,7 @@ public final class WLConfig {
 
     private final Configuration config;
     private static final String DEBUG_MODE = "DebugMode";
+    private static final String FILE_CHECK_INTERVAL = "FileCheckInterval";
     private static final String KICK_MESSAGE = "KickMessage";
     private static final String SQL_ENABLE = "SqlEnable";
     private static final String SQL_DRIVER = "SqlDriver";
@@ -25,6 +26,7 @@ public final class WLConfig {
     private static final String SQL_DRIVER_JAR = "SqlDriverJar";
     
     private boolean debugMode;
+    private long fileCheckInterval;
     private String kickMessage;      
     private boolean sqlEnabled;
     private String sqlDriver;
@@ -43,7 +45,8 @@ public final class WLConfig {
 
     public void loadValues(Whitelist plug) {
         debugMode = config.getBoolean(DEBUG_MODE, false);
-        kickMessage = config.getString(KICK_MESSAGE, "Sorry, you are not on the whitelist!");             
+        fileCheckInterval = config.getLong(FILE_CHECK_INTERVAL, 1000L);
+        kickMessage = plug.colorSet(config.getString(KICK_MESSAGE, "&bSorry! you are not on the &fwhitelist!"));
         sqlEnabled = config.getBoolean(SQL_ENABLE, false);
         sqlDriver = config.getString(SQL_DRIVER, "com.mysql.jdbc.Driver");
         sqlConnection = config.getString(SQL_DRIVER_CONNECTION, "jdbc:mysql://localhost/DATABASENAME?user=USERNAME&password=PASSWORD");
@@ -97,5 +100,9 @@ public final class WLConfig {
 
     public String sqlDriverJar() {
         return sqlDriverJar;
+    }
+    
+    public Long fileCheckInterval() {
+        return fileCheckInterval;
     }
 }

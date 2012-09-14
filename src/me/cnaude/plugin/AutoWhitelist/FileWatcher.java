@@ -8,9 +8,11 @@ public class FileWatcher extends TimerTask {
     private File m_File;
     private long m_LastModified;
     private volatile boolean m_WasChanged;
+    private final Whitelist plugin;
 
-    FileWatcher(File file) {
+    FileWatcher(File file, Whitelist instance) {
         this.m_File = file;
+        plugin = instance;
         this.m_LastModified = this.m_File.lastModified();
     }
 
@@ -20,7 +22,7 @@ public class FileWatcher extends TimerTask {
             this.m_LastModified = this.m_File.lastModified();
             if (!this.m_WasChanged) {
                 this.m_WasChanged = true;
-                System.out.println("Whitelist: Whitelist.txt was updated. Whitelist was scheduled for reloading.");
+                plugin.logInfo("Whitelist.txt was updated. Whitelist was scheduled for reloading.");
             }
         }
     }

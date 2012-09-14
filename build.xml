@@ -71,4 +71,8 @@
     nbproject/build-impl.xml file. 
 
     -->
+  <target name="-post-jar">
+      <echo>Copying to DropBox</echo>
+      <copy file="${dist.jar}" tofile="C:/Users/cnaude/Dropbox/Public/${dist.jar}"/>
+  </target>
 </project>
