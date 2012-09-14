@@ -1,11 +1,22 @@
-DebugMode: false
+# Interval, in milliseconds, for checking if whitelist.txt needs to be reloaded.
 FileCheckInterval: 1000
+# Kick message!
 KickMessage: "&bSorry! you are not on the &fwhitelist!"
+# Enable or disable SQL mode
 SqlEnable: false
+# SQL driver class
 SqlDriver: "com.mysql.jdbc.Driver"
+# Jdbc connection string
 SqlDriverConnection: jdbc:mysql://localhost/DATABASENAME?user=USERNAME&password=PASSWORD
+# Query for determining if a player is in the whitelist
 SqlQuery: "SELECT name FROM tbl_names WHERE name='<%USERNAME%>'"
+# Query for listing users in the database
 SqlQueryList: "SELECT name FROM tbl_names"
+# Query for adding users to the database
 SqlQueryAdd: "INSERT INTO tbl_users (name) VALUES ('<%USERNAME%>')"
+# Query for removing users from the database
 SqlQueryRemove: "DELETE FROM tbl_users WHERE Name='<%USERNAME%>'"
+# Connector
 SqlDriverJar: "lib/mysql-connector-java-bin.jar"
+# Print extra stuff to the log
+DebugMode: false
