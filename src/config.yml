@@ -7,7 +7,9 @@ SqlEnable: false
 # SQL driver class
 SqlDriver: "com.mysql.jdbc.Driver"
 # Jdbc connection string
-SqlDriverConnection: jdbc:mysql://localhost/DATABASENAME?user=USERNAME&password=PASSWORD
+SqlDriverConnection: jdbc:mysql://localhost/DATABASENAME
+SqlPass: PASSWORD
+SqlUser: USERNAME
 # Query for determining if a player is in the whitelist
 SqlQuery: "SELECT name FROM tbl_names WHERE name='<%USERNAME%>'"
 # Query for listing users in the database

@@ -19,6 +19,8 @@ public final class WLConfig {
     private static final String SQL_ENABLE = "SqlEnable";
     private static final String SQL_DRIVER = "SqlDriver";
     private static final String SQL_DRIVER_CONNECTION = "SqlDriverConnection";
+    private static final String SQL_DRIVER_USER = "SqlUser";
+    private static final String SQL_DRIVER_PASS = "SqlPass";        
     private static final String SQL_QUERY = "SqlQuery";
     private static final String SQL_QUERY_LIST = "SqlQueryList";
     private static final String SQL_QUERY_ADD = "SqlQueryAdd";
@@ -31,6 +33,8 @@ public final class WLConfig {
     private boolean sqlEnabled;
     private String sqlDriver;
     private String sqlConnection;
+    private String sqlUsername;
+    private String sqlPassword;
     private String sqlQuery;
     private String sqlQueryCount;
     private String sqlQueryList;
@@ -50,6 +54,8 @@ public final class WLConfig {
         sqlEnabled = config.getBoolean(SQL_ENABLE, false);
         sqlDriver = config.getString(SQL_DRIVER, "com.mysql.jdbc.Driver");
         sqlConnection = config.getString(SQL_DRIVER_CONNECTION, "jdbc:mysql://localhost/DATABASENAME?user=USERNAME&password=PASSWORD");
+        sqlUsername = config.getString(SQL_DRIVER_USER, "USERNAME");
+        sqlPassword = config.getString(SQL_DRIVER_PASS, "PASSWORD");
         sqlQuery = config.getString(SQL_QUERY, "SELECT name FROM tbl_names WHERE name='<%USERNAME%>'");
         sqlQueryList = config.getString(SQL_QUERY_LIST, "SELECT name FROM tbl_names");
         sqlQueryAdd = config.getString(SQL_QUERY_ADD, "INSERT INTO tbl_users (name) VALUES ('<%USERNAME%>')");
@@ -100,6 +106,14 @@ public final class WLConfig {
 
     public String sqlDriverJar() {
         return sqlDriverJar;
+    }
+    
+    public String sqlUsername() {
+        return sqlUsername;
+    }
+    
+    public String sqlPassword() {
+        return sqlPassword;
     }
     
     public Long fileCheckInterval() {
