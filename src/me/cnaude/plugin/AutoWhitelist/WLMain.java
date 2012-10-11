@@ -1,12 +1,10 @@
 package me.cnaude.plugin.AutoWhitelist;
 
-import java.awt.Color;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -14,15 +12,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class Whitelist extends JavaPlugin {
+public class WLMain extends JavaPlugin {
 
     private static WLConfig config;
     private final WLPlayerListener m_PlayerListner = new WLPlayerListener(this);
-    private FileWatcher m_Watcher;
+    private WLFileWatcher m_Watcher;
     private Timer m_Timer;
     private File m_Folder;
     private boolean m_bWhitelistActive;
-    private SQLConnection m_SqlConnection;
+    private WLSQLConnection m_SqlConnection;
     private ArrayList<String> m_SettingsWhitelistAllow;
     private boolean configLoaded = false;
     static final Logger log = Logger.getLogger("Minecraft");
@@ -51,7 +49,7 @@ public class Whitelist extends JavaPlugin {
             }
         }
 
-        this.m_Watcher = new FileWatcher(fWhitelist, this);
+        this.m_Watcher = new WLFileWatcher(fWhitelist, this);
         this.m_Timer = new Timer(true);
         this.m_Timer.schedule(this.m_Watcher, 0L, config.fileCheckInterval());
 
@@ -145,7 +143,7 @@ public class Whitelist extends JavaPlugin {
             return true;
         }
         if (args[0].compareToIgnoreCase("list") == 0) {
-            sender.sendMessage(ChatColor.YELLOW + "Players on whitelist: " + ChatColor.GRAY + getFormatedAllowList());
+            sender.sendMessage(ChatColor.YELLOW + "Players in whitelist.txt: " + ChatColor.GRAY + getFormatedAllowList());
             return true;
         }
         return false;
@@ -184,7 +182,7 @@ public class Whitelist extends JavaPlugin {
             reader.close();
 
             if (config.sqlEnabled()) {
-                this.m_SqlConnection = new SQLConnection(this);
+                this.m_SqlConnection = new WLSQLConnection(this);
             } else {
                 if (this.m_SqlConnection != null) {
                     this.m_SqlConnection.Cleanup();

@@ -1,6 +1,6 @@
 name: Whitelist
-main: me.cnaude.plugin.AutoWhitelist.Whitelist
-version: 3.1
+main: me.cnaude.plugin.AutoWhitelist.WLMain
+version: 3.2
 commands:
   whitelist:
     description: All whitelist commands

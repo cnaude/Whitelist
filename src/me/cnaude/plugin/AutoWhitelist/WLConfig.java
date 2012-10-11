@@ -42,12 +42,12 @@ public final class WLConfig {
     private String sqlQueryRemove;
     private String sqlDriverJar;
 
-    public WLConfig(Whitelist plug) {
+    public WLConfig(WLMain plug) {
         config = plug.getConfig();
         loadValues(plug);
     }
 
-    public void loadValues(Whitelist plug) {
+    public void loadValues(WLMain plug) {
         debugMode = config.getBoolean(DEBUG_MODE, false);
         fileCheckInterval = config.getLong(FILE_CHECK_INTERVAL, 1000L);
         kickMessage = plug.colorSet(config.getString(KICK_MESSAGE, "&bSorry! you are not on the &fwhitelist!"));

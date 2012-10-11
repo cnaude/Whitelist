@@ -7,9 +7,9 @@ import org.bukkit.event.player.PlayerLoginEvent;
 
 public class WLPlayerListener implements Listener {
 
-    private final Whitelist plugin;    
+    private final WLMain plugin;    
 
-    public WLPlayerListener(Whitelist instance) {
+    public WLPlayerListener(WLMain instance) {
         plugin = instance;        
     }
 
