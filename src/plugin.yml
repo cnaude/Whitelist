@@ -1,6 +1,6 @@
 name: Whitelist
 main: me.cnaude.plugin.AutoWhitelist.WLMain
-version: 3.2
+version: 3.3
 commands:
   whitelist:
     description: All whitelist commands
@@ -11,6 +11,7 @@ commands:
       /<command> on|off - actives/deactivates whitelist
       /<command> list - list whitelist entries
       /<command> dblist - list users in database
+      /<command> dbdump - dumps users from database to whitelist.txt
       
 permissions:
   whitelist.admin:

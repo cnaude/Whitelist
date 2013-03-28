@@ -123,6 +123,38 @@ public class WLSQLConnection {
         return false;
     }
     
+    public boolean dumpDB(CommandSender sender) {
+        try {
+            if (this.connection == null) {
+                this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
+            }
+            Statement stmt = this.connection.createStatement();
+            ResultSet rst = stmt.executeQuery(plugin.getWLConfig().sqlQueryList());            
+                                
+            int c = 0;
+            while (rst.next()) {
+                String pName = rst.getString(1);
+                if (!plugin.m_SettingsWhitelistAllow.contains(pName)) {
+                    plugin.m_SettingsWhitelistAllow.add(pName);
+                    c++;
+                }
+            }
+            plugin.saveWhitelist();
+            sender.sendMessage(ChatColor.YELLOW + "Dumped " + ChatColor.WHITE + c + ChatColor.YELLOW 
+                    + " users to the " + ChatColor.WHITE + "whitelist.txt" + ChatColor.YELLOW + " file.");
+            return true;
+        } catch (SQLException ex) {
+            this.connection = null;
+
+            plugin.logError("Whitelist: SQLException: " + ex.getMessage());
+            plugin.logError("Whitelist: SQLState: " + ex.getSQLState());
+            plugin.logError("Whitelist: VendorError: " + ex.getErrorCode());
+        } catch (Exception ex) {
+            plugin.logError("Whitelist: Exception: " + ex.getMessage());
+        }
+        return false;
+    }
+    
     public boolean addPlayerToWhitelist(String playerName, boolean bRetry) {
         if ((plugin.getWLConfig().sqlQueryAdd() != null) && (!plugin.getWLConfig().sqlQueryAdd().isEmpty())) {
             try {

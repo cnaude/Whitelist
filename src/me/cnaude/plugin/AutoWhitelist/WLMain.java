@@ -21,7 +21,7 @@ public class WLMain extends JavaPlugin {
     private File m_Folder;
     private boolean m_bWhitelistActive;
     private WLSQLConnection m_SqlConnection;
-    private ArrayList<String> m_SettingsWhitelistAllow;
+    public ArrayList<String> m_SettingsWhitelistAllow;
     private boolean configLoaded = false;
     static final Logger log = Logger.getLogger("Minecraft");
     public static final String PLUGIN_NAME = "AutoWhitelist";
@@ -142,6 +142,10 @@ public class WLMain extends JavaPlugin {
             printDBUserList(sender);
             return true;
         }
+        if (args[0].compareToIgnoreCase("dbdump") == 0) {
+            dumpDBUserList(sender);
+            return true;
+        }
         if (args[0].compareToIgnoreCase("list") == 0) {
             sender.sendMessage(ChatColor.YELLOW + "Players in whitelist.txt: " + ChatColor.GRAY + getFormatedAllowList());
             return true;
@@ -247,6 +251,13 @@ public class WLMain extends JavaPlugin {
     public boolean printDBUserList(CommandSender sender) {
         if (this.m_SqlConnection != null) {
             return this.m_SqlConnection.printDBUserList(sender);
+        }
+        return false;
+    }
+    
+    public boolean dumpDBUserList(CommandSender sender) {
+        if (this.m_SqlConnection != null) {
+            return this.m_SqlConnection.dumpDB(sender);
         }
         return false;
     }
