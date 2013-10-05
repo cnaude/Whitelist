@@ -134,8 +134,8 @@ public class WLSQLConnection {
             int c = 0;
             while (rst.next()) {
                 String pName = rst.getString(1);
-                if (!plugin.m_SettingsWhitelistAllow.contains(pName)) {
-                    plugin.m_SettingsWhitelistAllow.add(pName);
+                if (!plugin.whitelist.contains(pName)) {
+                    plugin.whitelist.add(pName);
                     c++;
                 }
             }

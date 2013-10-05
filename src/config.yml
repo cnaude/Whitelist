@@ -11,9 +11,9 @@ SqlDriverConnection: jdbc:mysql://localhost/DATABASENAME
 SqlPass: PASSWORD
 SqlUser: USERNAME
 # Query for determining if a player is in the whitelist
-SqlQuery: "SELECT name FROM tbl_names WHERE name='<%USERNAME%>'"
+SqlQuery: "SELECT name FROM tbl_users WHERE name='<%USERNAME%>'"
 # Query for listing users in the database
-SqlQueryList: "SELECT name FROM tbl_names"
+SqlQueryList: "SELECT name FROM tbl_users"
 # Query for adding users to the database
 SqlQueryAdd: "INSERT INTO tbl_users (name) VALUES ('<%USERNAME%>')"
 # Query for removing users from the database
