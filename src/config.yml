@@ -1,7 +1,7 @@
 # Interval, in milliseconds, for checking if whitelist.txt needs to be reloaded.
 FileCheckInterval: 1000
 # Kick message!
-KickMessage: "&bSorry! you are not on the &fwhitelist!"
+KickMessage: "&bSorry %NAME%! you are not on the &fwhitelist!"
 # Enable or disable SQL mode
 SqlEnable: false
 # SQL driver class

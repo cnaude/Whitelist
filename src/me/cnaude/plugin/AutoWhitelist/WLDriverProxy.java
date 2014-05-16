@@ -4,11 +4,13 @@ import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 public class WLDriverProxy implements Driver {
 
-    private Driver driver;
+    private final Driver driver;
 
     public WLDriverProxy(Driver driver) {
         this.driver = driver;
@@ -42,5 +44,10 @@ public class WLDriverProxy implements Driver {
     @Override
     public boolean jdbcCompliant() {
         return this.driver.jdbcCompliant();
+    }
+
+    @Override
+    public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

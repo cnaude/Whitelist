@@ -206,7 +206,7 @@ public class WLMain extends JavaPlugin {
                 writer.newLine();
             }
             writer.close();
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             logDebug(ex.getMessage());
             return false;
         }

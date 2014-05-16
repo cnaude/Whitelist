@@ -27,7 +27,8 @@ public class WLPlayerListener implements Listener {
                 plugin.logInfo("Allowing player: " + playerName);
             } else {
                 plugin.logInfo("Kicking player: " + playerName);                
-                event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, plugin.getWLConfig().kickMessage());                
+                event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, 
+                        plugin.getWLConfig().kickMessage().replace("%NAME%", playerName));                
             }
         }
     }
