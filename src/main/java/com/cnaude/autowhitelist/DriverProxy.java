@@ -1,4 +1,4 @@
-package me.cnaude.plugin.AutoWhitelist;
+package com.cnaude.autowhitelist;
 
 import java.sql.Connection;
 import java.sql.Driver;
@@ -8,11 +8,11 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-public class WLDriverProxy implements Driver {
+public class DriverProxy implements Driver {
 
     private final Driver driver;
 
-    public WLDriverProxy(Driver driver) {
+    public DriverProxy(Driver driver) {
         this.driver = driver;
     }
 

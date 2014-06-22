@@ -1,8 +1,11 @@
 /*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
+ *//*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
  */
-package me.cnaude.plugin.AutoWhitelist;
+package com.cnaude.autowhitelist;
 
 import org.bukkit.configuration.Configuration;
 
@@ -10,7 +13,7 @@ import org.bukkit.configuration.Configuration;
  *
  * @author cnaude
  */
-public final class WLConfig {
+public final class Config {
 
     private final Configuration config;
     private static final String DEBUG_MODE = "DebugMode";
@@ -42,12 +45,12 @@ public final class WLConfig {
     private String sqlQueryRemove;
     private String sqlDriverJar;
 
-    public WLConfig(WLMain plug) {
+    public Config(AutoWhitelist plug) {
         config = plug.getConfig();
         loadValues(plug);
     }
 
-    public void loadValues(WLMain plug) {
+    public void loadValues(AutoWhitelist plug) {
         debugMode = config.getBoolean(DEBUG_MODE, false);
         fileCheckInterval = config.getLong(FILE_CHECK_INTERVAL, 1000L);
         kickMessage = plug.colorSet(config.getString(KICK_MESSAGE, "&bSorry! you are not on the &fwhitelist!"));

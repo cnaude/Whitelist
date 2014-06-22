@@ -1,6 +1,11 @@
-package me.cnaude.plugin.AutoWhitelist;
+package com.cnaude.autowhitelist;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.logging.Level;
@@ -9,18 +14,17 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class WLMain extends JavaPlugin {
+public class AutoWhitelist extends JavaPlugin {
 
-    private static WLConfig config;
-    private final WLPlayerListener playerListener = new WLPlayerListener(this);
-    private WLFileWatcher fileWatcher;
+    private static Config config;
+    private final PlayerListener playerListener = new PlayerListener(this);
+    private FileWatcher fileWatcher;
     private Timer timer;
     private File dataFolder;
     private boolean whitelistActive;
-    private WLSQLConnection sqlConn;
+    private SqlConnection sqlConn;
     public ArrayList<String> whitelist;
     private boolean configLoaded = false;
     static final Logger log = Logger.getLogger("Minecraft");
@@ -29,16 +33,16 @@ public class WLMain extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        this.dataFolder = getDataFolder();
-        this.whitelist = new ArrayList();
-        this.whitelistActive = true;
-        this.sqlConn = null;
+        dataFolder = getDataFolder();
+        whitelist = new ArrayList();
+        whitelistActive = true;
+        sqlConn = null;
 
         loadWhitelistSettings();
 
         getServer().getPluginManager().registerEvents(playerListener, this);
 
-        File whitelistFile = new File(this.dataFolder.getAbsolutePath() + File.separator + "whitelist.txt");
+        File whitelistFile = new File(dataFolder.getAbsolutePath() + File.separator + "whitelist.txt");
         if (!whitelistFile.exists()) {
             logInfo("Whitelist.txt is missing, creating...");
             try {
@@ -49,9 +53,7 @@ public class WLMain extends JavaPlugin {
             }
         }
 
-        this.fileWatcher = new WLFileWatcher(whitelistFile, this);
-        this.timer = new Timer(true);
-        this.timer.schedule(this.fileWatcher, 0L, config.fileCheckInterval());
+        fileWatcher = new FileWatcher(whitelistFile, config.fileCheckInterval(), this);
     }
 
     public void logInfo(String _message) {
@@ -68,21 +70,22 @@ public class WLMain extends JavaPlugin {
         }
     }
 
-    public WLConfig getWLConfig() {
+    public Config getWLConfig() {
         return config;
     }
 
     @Override
     public void onDisable() {
-        this.timer.cancel();
-        this.timer.purge();
-        this.timer = null;
+        timer.cancel();
+        timer.purge();
+        timer = null;
         logDebug("Goodbye world!");
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         Player player;
+        String subCommand;
         String noPermission = ChatColor.RED + "You do not have permission to run this command!";
         if (sender instanceof Player) {
             player = (Player) sender;
@@ -93,11 +96,13 @@ public class WLMain extends JavaPlugin {
         }
         if (args.length < 1) {
             return false;
+        } else {
+            subCommand = args[0];
         }
-        if (args[0].compareToIgnoreCase("help") == 0) {
+        if (subCommand.equalsIgnoreCase("help")) {
             return false;
         }
-        if (args[0].compareToIgnoreCase("reload") == 0) {
+        if (subCommand.equalsIgnoreCase("reload")) {
             if (reloadSettings()) {
                 sender.sendMessage(ChatColor.GREEN + "Settings and whitelist reloaded");
             } else {
@@ -105,7 +110,7 @@ public class WLMain extends JavaPlugin {
             }
             return true;
         }
-        if (args[0].compareToIgnoreCase("add") == 0) {
+        if (subCommand.equalsIgnoreCase("add")) {
             if (args.length < 2) {
                 return false;
             } else if (addPlayerToWhitelist(args[1])) {
@@ -115,7 +120,7 @@ public class WLMain extends JavaPlugin {
             }
             return true;
         }
-        if (args[0].compareToIgnoreCase("remove") == 0) {
+        if (subCommand.equalsIgnoreCase("remove")) {
             if (args.length < 2) {
                 sender.sendMessage(ChatColor.RED + "Parameter missing: Player name");
             } else if (removePlayerFromWhitelist(args[1])) {
@@ -125,25 +130,25 @@ public class WLMain extends JavaPlugin {
             }
             return true;
         }
-        if (args[0].compareToIgnoreCase("on") == 0) {
+        if (subCommand.equalsIgnoreCase("on")) {
             setWhitelistActive(true);
             sender.sendMessage(ChatColor.GREEN + "Whitelist activated!");
             return true;
         }
-        if (args[0].compareToIgnoreCase("off") == 0) {
+        if (subCommand.equalsIgnoreCase("off")) {
             setWhitelistActive(false);
             sender.sendMessage(ChatColor.RED + "Whitelist deactivated!");
             return true;
         }
-        if (args[0].compareToIgnoreCase("dblist") == 0) {
+        if (subCommand.equalsIgnoreCase("dblist")) {
             printDBUserList(sender);
             return true;
         }
-        if (args[0].compareToIgnoreCase("dbdump") == 0) {
+        if (subCommand.equalsIgnoreCase("dbdump")) {
             dumpDBUserList(sender);
             return true;
         }
-        if (args[0].compareToIgnoreCase("list") == 0) {
+        if (subCommand.equalsIgnoreCase("list")) {
             sender.sendMessage(ChatColor.YELLOW + "Players in whitelist.txt: " + ChatColor.GRAY + getFormatedAllowList());
             return true;
         }
@@ -155,40 +160,38 @@ public class WLMain extends JavaPlugin {
     }
 
     public boolean loadWhitelistSettings() {
-        logInfo("Trying to load whitelist and configuration...");
-
-        if (!this.configLoaded) {
+        if (!configLoaded) {
             getConfig().options().copyDefaults(true);
             saveConfig();
             logInfo("Configuration loaded.");
-            config = new WLConfig(this);
+            config = new Config(this);
         } else {
             reloadConfig();
             getConfig().options().copyDefaults(false);
-            config = new WLConfig(this);
+            config = new Config(this);
             logInfo("Configuration reloaded.");
         }
         configLoaded = true;
 
         try {
-            this.whitelist.clear();
-            logDebug("Reading whitelist.txt");
-            BufferedReader reader = new BufferedReader(new FileReader(this.dataFolder.getAbsolutePath() + File.separator + "whitelist.txt"));
+            whitelist.clear();
+            logDebug("Loading whitelist.txt");
+            BufferedReader reader = new BufferedReader(new FileReader(dataFolder.getAbsolutePath() + File.separator + "whitelist.txt"));
             String line = reader.readLine();
             while (line != null) {
                 logDebug("Adding " + line + " to allow list.");
-                this.whitelist.add(line);
+                whitelist.add(line);
                 line = reader.readLine();
             }
             reader.close();
 
             if (config.sqlEnabled()) {
-                this.sqlConn = new WLSQLConnection(this);
+                sqlConn = new SqlConnection(this);
             } else {
-                if (this.sqlConn != null) {
-                    this.sqlConn.Cleanup();
+                if (sqlConn != null) {
+                    sqlConn.Cleanup();
                 }
-                this.sqlConn = null;
+                sqlConn = null;
             }
         } catch (Exception ex) {
             logDebug("Failed: " + ex.getMessage());
@@ -200,8 +203,8 @@ public class WLMain extends JavaPlugin {
 
     public boolean saveWhitelist() {
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(this.dataFolder.getAbsolutePath() + File.separator + "whitelist.txt"));
-            for (String player : this.whitelist) {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(dataFolder.getAbsolutePath() + File.separator + "whitelist.txt"));
+            for (String player : whitelist) {
                 writer.write(player);
                 writer.newLine();
             }
@@ -218,27 +221,27 @@ public class WLMain extends JavaPlugin {
     }
 
     public boolean isOnWhitelist(String playerName) {
-        for (String player : this.whitelist) {
-            if (player.compareToIgnoreCase(playerName) == 0) {
+        for (String player : whitelist) {
+            if (player.equalsIgnoreCase(playerName)) {
                 return true;
             }
         }
 
-        if ((config.sqlEnabled()) && (this.sqlConn != null)) {
-            return this.sqlConn.isOnWhitelist(playerName, true);
+        if ((config.sqlEnabled()) && (sqlConn != null)) {
+            return sqlConn.isOnWhitelist(playerName, true);
         }
 
         return false;
     }
 
     public boolean addPlayerToWhitelist(String playerName) {
-        if ((!config.sqlQueryAdd().isEmpty()) && (this.sqlConn != null)) {
+        if ((!config.sqlQueryAdd().isEmpty()) && (sqlConn != null)) {
             if (!isOnWhitelist(playerName)) {
-                return this.sqlConn.addPlayerToWhitelist(playerName, true);
+                return sqlConn.addPlayerToWhitelist(playerName, true);
             }
 
         } else if (!isOnWhitelist(playerName)) {
-            this.whitelist.add(playerName);
+            whitelist.add(playerName);
             return saveWhitelist();
         }
 
@@ -246,30 +249,30 @@ public class WLMain extends JavaPlugin {
     }
 
     public boolean printDBUserList(CommandSender sender) {
-        if (this.sqlConn != null) {
-            return this.sqlConn.printDBUserList(sender);
+        if (sqlConn != null) {
+            return sqlConn.printDBUserList(sender);
         }
         return false;
     }
     
     public boolean dumpDBUserList(CommandSender sender) {
-        if (this.sqlConn != null) {
-            return this.sqlConn.dumpDB(sender);
+        if (sqlConn != null) {
+            return sqlConn.dumpDB(sender);
         }
         return false;
     }
 
     public boolean removePlayerFromWhitelist(String playerName) {
-        if (!config.sqlQueryRemove().isEmpty() && this.sqlConn != null) {
+        if (!config.sqlQueryRemove().isEmpty() && sqlConn != null) {
             if (isOnWhitelist(playerName)) {
-                return this.sqlConn.removePlayerFromWhitelist(playerName, true);
+                return sqlConn.removePlayerFromWhitelist(playerName, true);
             }
         } else {
-            for (int i = 0; i < this.whitelist.size(); i++) {
-                if (playerName.compareToIgnoreCase((String) this.whitelist.get(i)) != 0) {
+            for (int i = 0; i < whitelist.size(); i++) {
+                if (playerName.compareToIgnoreCase((String) whitelist.get(i)) != 0) {
                     continue;
                 }
-                this.whitelist.remove(i);
+                whitelist.remove(i);
                 return saveWhitelist();
             }
         }
@@ -283,7 +286,7 @@ public class WLMain extends JavaPlugin {
 
     public String getFormatedAllowList() {
         String result = "";
-        for (String player : this.whitelist) {
+        for (String player : whitelist) {
             if (result.length() > 0) {
                 result = result + ", ";
             }
@@ -293,23 +296,23 @@ public class WLMain extends JavaPlugin {
     }
 
     public boolean isWhitelistActive() {
-        return this.whitelistActive;
+        return whitelistActive;
     }
 
     public void setWhitelistActive(boolean isWhitelistActive) {
-        this.whitelistActive = isWhitelistActive;
+        whitelistActive = isWhitelistActive;
     }
 
     public boolean needReloadWhitelist() {
-        if (this.fileWatcher != null) {
-            return this.fileWatcher.wasFileModified();
+        if (fileWatcher != null) {
+            return fileWatcher.wasFileModified();
         }
         return false;
     }
 
     public void resetNeedReloadWhitelist() {
-        if (this.fileWatcher != null) {
-            this.fileWatcher.resetFileModifiedState();
+        if (fileWatcher != null) {
+            fileWatcher.resetFileModifiedState();
         }
     }
 }

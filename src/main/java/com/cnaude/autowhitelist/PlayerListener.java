@@ -1,15 +1,15 @@
-package me.cnaude.plugin.AutoWhitelist;
+package com.cnaude.autowhitelist;
 
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLoginEvent;
 
-public class WLPlayerListener implements Listener {
+public class PlayerListener implements Listener {
 
-    private final WLMain plugin;    
+    private final AutoWhitelist plugin;    
 
-    public WLPlayerListener(WLMain instance) {
+    public PlayerListener(AutoWhitelist instance) {
         plugin = instance;        
     }
 

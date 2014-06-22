@@ -1,6 +1,6 @@
-name: Whitelist
-main: me.cnaude.plugin.AutoWhitelist.WLMain
-version: 3.4
+name: ${project.name}
+version: ${project.version}
+description: ${project.description}
 commands:
   whitelist:
     description: All whitelist commands

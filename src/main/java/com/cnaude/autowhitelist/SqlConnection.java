@@ -1,4 +1,4 @@
-package me.cnaude.plugin.AutoWhitelist;
+package com.cnaude.autowhitelist;
 
 import java.io.File;
 import java.net.URL;
@@ -13,13 +13,13 @@ import java.util.Enumeration;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 
-public class WLSQLConnection {
+public class SqlConnection {
 
     Connection connection;
     Driver proxyDriver;
-    private WLMain plugin;    
+    private AutoWhitelist plugin;    
 
-    public WLSQLConnection(WLMain instance)
+    public SqlConnection(AutoWhitelist instance)
             throws Exception {
         plugin = instance;        
         this.connection = null;
@@ -38,7 +38,7 @@ public class WLSQLConnection {
                 if (bUseLoader) {
                     URL url = new URL("jar:file:" + plugin.getWLConfig().sqlDriver() + "!/");
                     URLClassLoader ucl = new URLClassLoader(new URL[]{url});
-                    this.proxyDriver = new WLDriverProxy((Driver) Class.forName(plugin.getWLConfig().sqlDriver(), true, ucl).newInstance());
+                    this.proxyDriver = new DriverProxy((Driver) Class.forName(plugin.getWLConfig().sqlDriver(), true, ucl).newInstance());
                     DriverManager.registerDriver(this.proxyDriver);
                 } else {
                     Class.forName(plugin.getWLConfig().sqlDriver()).newInstance();
