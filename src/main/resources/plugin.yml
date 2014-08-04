@@ -1,6 +1,9 @@
 name: ${project.name}
 version: ${project.version}
 description: ${project.description}
+author: cnaude
+website: ${project.url}
+main: com.cnaude.autowhitelist.AutoWhitelist
 commands:
   whitelist:
     description: All whitelist commands
@@ -14,6 +17,30 @@ commands:
       /<command> dbdump - dumps users from database to whitelist.txt
       
 permissions:
+  whitelist.help:
+    default: true
+    description: Provides admin access to help command
   whitelist.admin:
+    default: op
+    description: Provides access to all whitelist commands
+  whitelist.add:
     default: false
-    description: Provides admin access to this plugin
+    description: Provides access to add command
+  whitelist.reload:
+    default: false
+    description: Provides access to reloadcommand
+  whitelist.reomve:
+    default: false
+    description: Provides access to reomve command
+  whitelist.on:
+    default: false
+    description: Provides access to on command
+  whitelist.off:
+    default: false
+    description: Provides access to off command
+  whitelist.dblist:
+    default: false
+    description: Provides access to dblist command
+  whitelist.dbdump:
+    default: false
+    description: Provides access to add command

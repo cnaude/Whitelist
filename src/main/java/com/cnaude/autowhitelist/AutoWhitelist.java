@@ -31,6 +31,8 @@ public class AutoWhitelist extends JavaPlugin {
     public static final String PLUGIN_NAME = "AutoWhitelist";
     public static final String LOG_HEADER = "[" + PLUGIN_NAME + "]";
 
+    private final String PERM_ADMIN = "whitelist.admin";
+
     @Override
     public void onEnable() {
         dataFolder = getDataFolder();
@@ -82,77 +84,70 @@ public class AutoWhitelist extends JavaPlugin {
         logDebug("Goodbye world!");
     }
 
+    public boolean chkPermissions(CommandSender sender, String cmd) {
+        return sender.hasPermission(PERM_ADMIN) || sender.hasPermission("whitelist." + cmd);
+    }
+
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
-        Player player;
         String subCommand;
-        String noPermission = ChatColor.RED + "You do not have permission to run this command!";
-        if (sender instanceof Player) {
-            player = (Player) sender;
-            if (!isAdmin(player)) {
-                player.sendMessage(noPermission);
-                return true;
-            }
-        }
         if (args.length < 1) {
             return false;
         } else {
-            subCommand = args[0];
+            subCommand = args[0].toLowerCase();
         }
-        if (subCommand.equalsIgnoreCase("help")) {
-            return false;
-        }
-        if (subCommand.equalsIgnoreCase("reload")) {
-            if (reloadSettings()) {
-                sender.sendMessage(ChatColor.GREEN + "Settings and whitelist reloaded");
-            } else {
-                sender.sendMessage(ChatColor.RED + "Could not reload whitelist...");
-            }
+        if (!chkPermissions(sender, subCommand)) {
+            sender.sendMessage(ChatColor.RED + "You do not have permission to run this command!");
             return true;
         }
-        if (subCommand.equalsIgnoreCase("add")) {
-            if (args.length < 2) {
+        switch (subCommand) {
+            case "reload":
+                if (reloadSettings()) {
+                    sender.sendMessage(ChatColor.GREEN + "Settings and whitelist reloaded");
+                } else {
+                    sender.sendMessage(ChatColor.RED + "Could not reload whitelist...");
+                }
+                break;
+            case "add":
+                if (args.length < 2) {
+                    sender.sendMessage(ChatColor.RED + "Parameter missing: Player name");
+                } else if (addPlayerToWhitelist(args[1])) {
+                    sender.sendMessage(ChatColor.GREEN + "Player \"" + args[1] + "\" added");
+                } else {
+                    sender.sendMessage(ChatColor.RED + "Could not add player \"" + args[1] + "\"");
+                }
+                break;
+            case "remove":
+                if (args.length < 2) {
+                    sender.sendMessage(ChatColor.RED + "Parameter missing: Player name");
+                } else if (removePlayerFromWhitelist(args[1])) {
+                    sender.sendMessage(ChatColor.GREEN + "Player \"" + args[1] + "\" removed");
+                } else {
+                    sender.sendMessage(ChatColor.RED + "Could not remove player \"" + args[1] + "\"");
+                }
+                break;
+            case "on":
+                setWhitelistActive(true);
+                sender.sendMessage(ChatColor.GREEN + "Whitelist activated!");
+                break;
+            case "off":
+                setWhitelistActive(false);
+                sender.sendMessage(ChatColor.RED + "Whitelist deactivated!");
+                break;
+            case "dblist":
+                printDBUserList(sender);
+                break;
+            case "dbdump":
+                dumpDBUserList(sender);
+                break;
+            case "list":
+                sender.sendMessage(ChatColor.YELLOW + "Players in whitelist.txt: " + ChatColor.GRAY + getFormatedAllowList());
+                break;
+            case "help":
+            default:
                 return false;
-            } else if (addPlayerToWhitelist(args[1])) {
-                sender.sendMessage(ChatColor.GREEN + "Player \"" + args[1] + "\" added");
-            } else {
-                sender.sendMessage(ChatColor.RED + "Could not add player \"" + args[1] + "\"");
-            }
-            return true;
         }
-        if (subCommand.equalsIgnoreCase("remove")) {
-            if (args.length < 2) {
-                sender.sendMessage(ChatColor.RED + "Parameter missing: Player name");
-            } else if (removePlayerFromWhitelist(args[1])) {
-                sender.sendMessage(ChatColor.GREEN + "Player \"" + args[1] + "\" removed");
-            } else {
-                sender.sendMessage(ChatColor.RED + "Could not remove player \"" + args[1] + "\"");
-            }
-            return true;
-        }
-        if (subCommand.equalsIgnoreCase("on")) {
-            setWhitelistActive(true);
-            sender.sendMessage(ChatColor.GREEN + "Whitelist activated!");
-            return true;
-        }
-        if (subCommand.equalsIgnoreCase("off")) {
-            setWhitelistActive(false);
-            sender.sendMessage(ChatColor.RED + "Whitelist deactivated!");
-            return true;
-        }
-        if (subCommand.equalsIgnoreCase("dblist")) {
-            printDBUserList(sender);
-            return true;
-        }
-        if (subCommand.equalsIgnoreCase("dbdump")) {
-            dumpDBUserList(sender);
-            return true;
-        }
-        if (subCommand.equalsIgnoreCase("list")) {
-            sender.sendMessage(ChatColor.YELLOW + "Players in whitelist.txt: " + ChatColor.GRAY + getFormatedAllowList());
-            return true;
-        }
-        return false;
+        return true;
     }
 
     public String colorSet(String finishedProduct) {
@@ -176,14 +171,14 @@ public class AutoWhitelist extends JavaPlugin {
         try {
             whitelist.clear();
             logDebug("Loading whitelist.txt");
-            BufferedReader reader = new BufferedReader(new FileReader(dataFolder.getAbsolutePath() + File.separator + "whitelist.txt"));
-            String line = reader.readLine();
-            while (line != null) {
-                logDebug("Adding " + line + " to allow list.");
-                whitelist.add(line);
-                line = reader.readLine();
+            try (BufferedReader reader = new BufferedReader(new FileReader(dataFolder.getAbsolutePath() + File.separator + "whitelist.txt"))) {
+                String line = reader.readLine();
+                while (line != null) {
+                    logDebug("Adding " + line + " to allow list.");
+                    whitelist.add(line);
+                    line = reader.readLine();
+                }
             }
-            reader.close();
 
             if (config.sqlEnabled()) {
                 sqlConn = new SqlConnection(this);
@@ -203,12 +198,12 @@ public class AutoWhitelist extends JavaPlugin {
 
     public boolean saveWhitelist() {
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(dataFolder.getAbsolutePath() + File.separator + "whitelist.txt"));
-            for (String player : whitelist) {
-                writer.write(player);
-                writer.newLine();
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(dataFolder.getAbsolutePath() + File.separator + "whitelist.txt"))) {
+                for (String player : whitelist) {
+                    writer.write(player);
+                    writer.newLine();
+                }
             }
-            writer.close();
         } catch (IOException ex) {
             logDebug(ex.getMessage());
             return false;
@@ -254,7 +249,7 @@ public class AutoWhitelist extends JavaPlugin {
         }
         return false;
     }
-    
+
     public boolean dumpDBUserList(CommandSender sender) {
         if (sqlConn != null) {
             return sqlConn.dumpDB(sender);
