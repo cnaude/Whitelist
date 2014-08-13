@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.cnaude</groupId>
+  <artifactId>Whitelist</artifactId>
+  <name>Whitelist</name>
+  <version>3.5-${build.number}</version>
+  <description>Whitelist plugin for CraftBukkit.</description>
+  <url>http://dev.bukkit.org/server-mods/Whitelist/</url>
+  <build>
+    <resources>
+      <resource>
+        <filtering>true</filtering>
+        <directory>src/main/resources</directory>
+        <includes>
+          <include>plugin.yml</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+        <excludes>
+          <exclude>plugin.yml</exclude>
+        </excludes>
+      </resource>
+    </resources>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.3.2</version>
+        <configuration>
+          <source>1.7</source>
+          <target>1.7</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.3</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <minimizeJar>true</minimizeJar>
+              <artifactSet>
+                <includes>
+                  <include>com.google.code.gson</include>
+                </includes>
+              </artifactSet>
+              <filters />
+              <relocations>
+                <relocation>
+                  <pattern>com.google.code.gson</pattern>
+                  <shadedPattern>com.google.code.gson</shadedPattern>
+                </relocation>
+              </relocations>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <tasks>
+                <copy />
+                <exec>
+                  <arg />
+                </exec>
+              </tasks>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+  <repositories>
+    <repository>
+      <releases />
+      <snapshots />
+      <id>sonatype-nexus-public</id>
+      <name>SonaType public snapshots and releases repository</name>
+      <url>https://oss.sonatype.org/content/groups/public</url>
+    </repository>
+    <repository>
+      <snapshots />
+      <id>bukkit-repo</id>
+      <url>http://repo.bukkit.org/content/groups/public/</url>
+    </repository>
+    <repository>
+      <snapshots />
+      <id>cnaude-repo</id>
+      <url>http://cnaude.org/repo/</url>
+    </repository>
+  </repositories>
+  <dependencies>
+    <dependency>
+      <groupId>org.bukkit</groupId>
+      <artifactId>bukkit</artifactId>
+      <version>1.7.9-R0.1</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>15.0</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+  <distributionManagement>
+    <repository>
+      <id>stage-repo</id>
+      <url>file://${basedir}/../repo/releases</url>
+    </repository>
+    <snapshotRepository>
+      <id>stage-repo-stapshots</id>
+      <url>file://${basedir}/../repo/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
+  <properties>
+    <build.number>SNAPSHOT</build.number>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <bukkit.version>1.7.9-R0.1</bukkit.version>
+  </properties>
+</project>
+

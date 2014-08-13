@@ -1,10 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- *//*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.cnaude.autowhitelist;
 
 import org.bukkit.configuration.Configuration;
@@ -17,6 +10,7 @@ public final class Config {
 
     private final Configuration config;
     private static final String DEBUG_MODE = "DebugMode";
+    private static final String UUID_MODE = "UUIDMode";
     private static final String FILE_CHECK_INTERVAL = "FileCheckInterval";
     private static final String KICK_MESSAGE = "KickMessage";
     private static final String SQL_ENABLE = "SqlEnable";
@@ -31,6 +25,7 @@ public final class Config {
     private static final String SQL_DRIVER_JAR = "SqlDriverJar";
     
     private boolean debugMode;
+    private boolean uuidMode;
     private long fileCheckInterval;
     private String kickMessage;      
     private boolean sqlEnabled;
@@ -52,6 +47,7 @@ public final class Config {
 
     public void loadValues(AutoWhitelist plug) {
         debugMode = config.getBoolean(DEBUG_MODE, false);
+        uuidMode = config.getBoolean(UUID_MODE, false);
         fileCheckInterval = config.getLong(FILE_CHECK_INTERVAL, 1000L);
         kickMessage = plug.colorSet(config.getString(KICK_MESSAGE, "&bSorry! you are not on the &fwhitelist!"));
         sqlEnabled = config.getBoolean(SQL_ENABLE, false);
@@ -69,6 +65,10 @@ public final class Config {
 
     public boolean debugMode() {
         return debugMode;
+    }
+    
+    public boolean uuidMode() {
+        return uuidMode;
     }
 
     public String kickMessage() {

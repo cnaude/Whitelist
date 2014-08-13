@@ -23,7 +23,7 @@ public class PlayerListener implements Listener {
             }
 
             String playerName = event.getPlayer().getName();            
-            if (plugin.isOnWhitelist(playerName)) {
+            if (plugin.isOnWhitelist(event.getPlayer())) {
                 plugin.logInfo("Allowing player: " + playerName);
             } else {
                 plugin.logInfo("Kicking player: " + playerName);                

@@ -24,10 +24,10 @@
             <url>https://oss.sonatype.org/content/groups/public</url>
             <releases> 
                 <!-- set to true if you wish to fetch releases from this repo too. -->
-                <enabled>false</enabled>
+                <enabled>true</enabled>
             </releases> 
             <snapshots>
-                <enabled>false</enabled>
+                <enabled>true</enabled>
             </snapshots>
         </repository>
         <!-- Bukkit -->
@@ -35,7 +35,7 @@
             <id>bukkit-repo</id>
             <url>http://repo.bukkit.org/content/groups/public/</url>
             <snapshots>
-                <enabled>false</enabled>
+                <enabled>true</enabled>
             </snapshots>
         </repository>
        
@@ -46,7 +46,10 @@
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
-        </repository>        
+        </repository>     
+        
+         
+        
     </repositories>
     
     <dependencies>
@@ -57,6 +60,14 @@
             <type>jar</type>
             <scope>provided</scope>
         </dependency>
+        
+        <!--  Gson: Java to Json conversion -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.3</version>
+            <scope>compile</scope>
+        </dependency>  
 
         <!-- Following dependency is provided by CraftBukkit -->
         <dependency>
@@ -99,7 +110,35 @@
                     <target>1.7</target>
                 </configuration>
             </plugin>
-
+<plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <minimizeJar>true</minimizeJar>
+                            <artifactSet>
+                                <includes>
+                                    <include>com.google.code.gson</include>
+                                </includes>
+                            </artifactSet>
+                            <filters>
+                            </filters>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.google.code.gson</pattern>
+                                    <shadedPattern>com.google.code.gson</shadedPattern>
+                                </relocation>                                
+                            </relocations>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>   
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <executions>
