@@ -20,5 +20,7 @@ SqlQueryAdd: "INSERT INTO tbl_users (name) VALUES ('<%USERNAME%>')"
 SqlQueryRemove: "DELETE FROM tbl_users WHERE Name='<%USERNAME%>'"
 # Connector
 SqlDriverJar: "lib/mysql-connector-java-bin.jar"
+# Check player UUID instead of name. This will convert txt file to json automatically.
+UUIDMode: false
 # Print extra stuff to the log
 DebugMode: false

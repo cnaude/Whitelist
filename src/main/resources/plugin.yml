@@ -9,8 +9,8 @@ commands:
     description: All whitelist commands
     usage: |
       /<command> reload - reloads the whitelist and settings
-      /<command> add [player] - adds a player to the whitelist
-      /<command> remove [player] - removes a player from the whitelist
+      /<command> add [player(s)] - adds a player to the whitelist
+      /<command> remove [player(s)] - removes a player from the whitelist
       /<command> on|off - actives/deactivates whitelist
       /<command> list - list whitelist entries
       /<command> dblist - list users in database

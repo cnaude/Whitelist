@@ -39,8 +39,8 @@ public class AutoWhitelist extends JavaPlugin {
     private final String WHITELIST_FILENAME = "whitelist.txt";
     private final String UUID_FILENAME = "whitelist.json";
 
-    private final String ADD_USAGE = ChatColor.GOLD + "Usage: " + ChatColor.WHITE + "/whitelist add <player>";
-    private final String REMOVE_USAGE = ChatColor.GOLD + "Usage: " + ChatColor.WHITE + "/whitelist remove <player>";
+    private final String ADD_USAGE = ChatColor.GOLD + "Usage: " + ChatColor.WHITE + "/whitelist add <player(s)>";
+    private final String REMOVE_USAGE = ChatColor.GOLD + "Usage: " + ChatColor.WHITE + "/whitelist remove <player(s)>";
 
     File whitelistFile;
     File uuidFile;
@@ -147,17 +147,21 @@ public class AutoWhitelist extends JavaPlugin {
                 break;
             case "add":
                 if (args.length >= 2) {
-                    addPlayerToWhitelist(args[1], sender);
+                    for (int i = 1; i < args.length; i++) {
+                        addPlayerToWhitelist(args[i], sender);
+                    }
                 } else {
                     sender.sendMessage(ADD_USAGE);
                 }
                 break;
             case "remove":
                 if (args.length >= 2) {
-                    if (removePlayerFromWhitelist(args[1])) {
-                        sender.sendMessage(ChatColor.YELLOW + "Player removed: " + ChatColor.WHITE + args[1]);
-                    } else {
-                        sender.sendMessage(ChatColor.RED + "Failed to remove player: " + ChatColor.WHITE + args[1]);
+                    for (int i = 1; i < args.length; i++) {
+                        if (removePlayerFromWhitelist(args[i])) {
+                            sender.sendMessage(ChatColor.YELLOW + "Player removed: " + ChatColor.WHITE + args[i]);
+                        } else {
+                            sender.sendMessage(ChatColor.RED + "Failed to remove player: " + ChatColor.WHITE + args[i]);
+                        }
                     }
                 } else {
                     sender.sendMessage(REMOVE_USAGE);
