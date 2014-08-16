@@ -10,10 +10,14 @@ public class FileWatcher {
     private volatile boolean wasFileChanged;
     private final AutoWhitelist plugin;
     private final BukkitTask bt;
+    protected final String fileName;
 
     public FileWatcher(File file, long interval, AutoWhitelist instance) {
         this.plugin = instance;
         this.watchFile = file;
+        this.fileName = file.getName();
+        
+        plugin.logInfo("Watching " + watchFile.getName() + " for changes...");
 
         bt = this.plugin.getServer().getScheduler().runTaskTimerAsynchronously(this.plugin, new Runnable() {
             @Override

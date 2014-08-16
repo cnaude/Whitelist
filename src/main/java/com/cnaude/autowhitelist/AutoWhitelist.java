@@ -2,6 +2,7 @@ package com.cnaude.autowhitelist;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -27,7 +28,7 @@ public class AutoWhitelist extends JavaPlugin {
     private File dataFolder;
     private boolean whitelistActive;
     private SqlConnection sqlConn;
-    public ArrayList<String> whitelist;
+    public CaseInsensitiveList whitelist;
     public ArrayList<User> uuidWhitelist;
     private boolean configLoaded = false;
     static final Logger log = Logger.getLogger("Minecraft");
@@ -38,19 +39,25 @@ public class AutoWhitelist extends JavaPlugin {
     private final String WHITELIST_FILENAME = "whitelist.txt";
     private final String UUID_FILENAME = "whitelist.json";
 
+    private final String ADD_USAGE = ChatColor.GOLD + "Usage: " + ChatColor.WHITE + "/whitelist add <player>";
+    private final String REMOVE_USAGE = ChatColor.GOLD + "Usage: " + ChatColor.WHITE + "/whitelist remove <player>";
+
     File whitelistFile;
     File uuidFile;
 
     @Override
     public void onEnable() {
         dataFolder = getDataFolder();
-        whitelist = new ArrayList();
+        whitelist = new CaseInsensitiveList();
         uuidWhitelist = new ArrayList();
         whitelistActive = true;
         sqlConn = null;
 
         whitelistFile = new File(dataFolder.getAbsolutePath(), WHITELIST_FILENAME);
         uuidFile = new File(dataFolder.getAbsolutePath(), UUID_FILENAME);
+
+        loadWhitelistSettings();
+
         if (!whitelistFile.exists() && !config.uuidMode()) {
             logInfo("Creating " + WHITELIST_FILENAME);
             try {
@@ -70,11 +77,15 @@ public class AutoWhitelist extends JavaPlugin {
             }
         }
 
-        loadWhitelistSettings();
+        createSqlConnection();
 
         if (whitelistFile.exists() && config.uuidMode()) {
             logInfo("Converting " + WHITELIST_FILENAME + " to " + UUID_FILENAME);
             convertTxtToJson();
+        } else if (whitelistFile.exists() && !config.uuidMode()) {
+            loadWhitelist();
+        } else if (uuidFile.exists() && config.uuidMode()) {
+            loadUUIDWhitelist();
         }
 
         if (config.uuidMode()) {
@@ -135,21 +146,21 @@ public class AutoWhitelist extends JavaPlugin {
                 }
                 break;
             case "add":
-                if (args.length < 2) {
-                    sender.sendMessage(ChatColor.RED + "Parameter missing: Player name");
-                } else if (addPlayerToWhitelist(args[1])) {
-                    sender.sendMessage(ChatColor.GREEN + "Player \"" + args[1] + "\" added");
+                if (args.length >= 2) {
+                    addPlayerToWhitelist(args[1], sender);
                 } else {
-                    sender.sendMessage(ChatColor.RED + "Could not add player \"" + args[1] + "\"");
+                    sender.sendMessage(ADD_USAGE);
                 }
                 break;
             case "remove":
-                if (args.length < 2) {
-                    sender.sendMessage(ChatColor.RED + "Parameter missing: Player name");
-                } else if (removePlayerFromWhitelist(args[1])) {
-                    sender.sendMessage(ChatColor.GREEN + "Player \"" + args[1] + "\" removed");
+                if (args.length >= 2) {
+                    if (removePlayerFromWhitelist(args[1])) {
+                        sender.sendMessage(ChatColor.YELLOW + "Player removed: " + ChatColor.WHITE + args[1]);
+                    } else {
+                        sender.sendMessage(ChatColor.RED + "Failed to remove player: " + ChatColor.WHITE + args[1]);
+                    }
                 } else {
-                    sender.sendMessage(ChatColor.RED + "Could not remove player \"" + args[1] + "\"");
+                    sender.sendMessage(REMOVE_USAGE);
                 }
                 break;
             case "on":
@@ -167,7 +178,7 @@ public class AutoWhitelist extends JavaPlugin {
                 dumpDBUserList(sender);
                 break;
             case "list":
-                sender.sendMessage(ChatColor.YELLOW + "Players in whitelist.txt: " + ChatColor.GRAY + getFormatedAllowList());
+                getFormatedAllowList(sender);
                 break;
             case "help":
             default:
@@ -178,6 +189,62 @@ public class AutoWhitelist extends JavaPlugin {
 
     public String colorSet(String finishedProduct) {
         return ChatColor.translateAlternateColorCodes('&', finishedProduct);
+    }
+
+    public boolean loadWhitelist() {
+        try {
+            whitelist.clear();
+            logDebug("Loading " + WHITELIST_FILENAME);
+            try (BufferedReader reader = new BufferedReader(new FileReader(whitelistFile))) {
+                String line = reader.readLine();
+                while (line != null) {
+                    logDebug("Adding " + line + " to allow list.");
+                    whitelist.add(line);
+                    line = reader.readLine();
+                }
+            }
+        } catch (IOException ex) {
+            logError("Failed: " + ex.getMessage());
+            return false;
+        }
+        return true;
+    }
+
+    public boolean loadUUIDWhitelist() {
+        try {
+            uuidWhitelist.clear();
+            logDebug("Loading " + UUID_FILENAME);
+            try (BufferedReader reader = new BufferedReader(new FileReader(uuidFile))) {
+                Gson gson = new GsonBuilder().create();
+                uuidWhitelist = gson.fromJson(reader, new TypeToken<ArrayList<User>>() {
+                }.getType());
+            }
+            if (uuidWhitelist == null) {
+                logDebug("Null uuidWhitelist detected. Initializing empty list.");
+                uuidWhitelist = new ArrayList<>();
+            }
+        } catch (IOException ex) {
+            logError("Failed: " + ex.getMessage());
+            return false;
+        }
+        return true;
+    }
+
+    public boolean createSqlConnection() {
+        try {
+            if (config.sqlEnabled()) {
+                sqlConn = new SqlConnection(this);
+            } else {
+                if (sqlConn != null) {
+                    sqlConn.Cleanup();
+                }
+                sqlConn = null;
+            }
+        } catch (Exception ex) {
+            logError("Failed: " + ex.getMessage());
+            return false;
+        }
+        return true;
     }
 
     public boolean loadWhitelistSettings() {
@@ -193,33 +260,6 @@ public class AutoWhitelist extends JavaPlugin {
             logInfo("Configuration reloaded.");
         }
         configLoaded = true;
-
-        try {
-            whitelist.clear();
-            logDebug("Loading " + WHITELIST_FILENAME);
-            try (BufferedReader reader = new BufferedReader(new FileReader(whitelistFile))) {
-                String line = reader.readLine();
-                while (line != null) {
-                    logDebug("Adding " + line + " to allow list.");
-                    whitelist.add(line);
-                    line = reader.readLine();
-                }
-            }
-
-            if (config.sqlEnabled()) {
-                sqlConn = new SqlConnection(this);
-            } else {
-                if (sqlConn != null) {
-                    sqlConn.Cleanup();
-                }
-                sqlConn = null;
-            }
-        } catch (Exception ex) {
-            logError("Failed: " + ex.getMessage());
-            ex.printStackTrace();
-            return false;
-        }
-
         return true;
     }
 
@@ -264,10 +304,8 @@ public class AutoWhitelist extends JavaPlugin {
     }
 
     public boolean isOnWhitelist(String playerName) {
-        for (String pName : whitelist) {
-            if (pName.equalsIgnoreCase(playerName)) {
-                return true;
-            }
+        if (whitelist.contains(playerName)) {
+            return true;
         }
 
         if ((config.sqlEnabled()) && (sqlConn != null)) {
@@ -276,9 +314,13 @@ public class AutoWhitelist extends JavaPlugin {
 
         return false;
     }
-    
+
     public boolean isOnWhitelist(Player player) {
-        return isOnWhitelist(new User(player));
+        if (config.uuidMode()) {
+            return isOnWhitelist(new User(player));
+        } else {
+            return isOnWhitelist(player.getName());
+        }
     }
 
     public boolean isOnWhitelist(User user) {
@@ -288,32 +330,45 @@ public class AutoWhitelist extends JavaPlugin {
                 return true;
             }
         }
-
-        //if ((config.sqlEnabled()) && (sqlConn != null)) {
-        //    return sqlConn.isOnWhitelist(user, true);
-        //}
         return false;
     }
 
-    public boolean addPlayerToWhitelist(String playerName) {
-        if (config.uuidMode()) {
-            User user = getPlayerUser(playerName);
-            if (!isOnWhitelist(user)) {
-                uuidWhitelist.add(user);
-                return saveWhitelist();
+    public void asyncUserAdd(final String playerName, final CommandSender sender) {
+        getServer().getScheduler().runTaskAsynchronously(this, new Runnable() {
+            @Override
+            public void run() {
+                User user = getPlayerUser(playerName);
+                if (user.uuid == null) {
+                    sender.sendMessage(ChatColor.RED + "Invalid player: " + ChatColor.WHITE + playerName);
+                } else {
+                    if (!isOnWhitelist(user)) {
+                        uuidWhitelist.add(user);
+                        saveWhitelist();
+                        sender.sendMessage(ChatColor.YELLOW + "Added player: "
+                                + ChatColor.WHITE + playerName + " (" + user.uuid + ")");
+                    }
+                }
             }
+        });
+    }
+
+    public void addPlayerToWhitelist(String playerName, CommandSender sender) {
+        if (config.uuidMode()) {
+            asyncUserAdd(playerName, sender);
         } else {
             if (!isOnWhitelist(playerName)) {
                 if ((!config.sqlQueryAdd().isEmpty()) && (sqlConn != null)) {
-                    return sqlConn.addPlayerToWhitelist(playerName, true);
+                    if (sqlConn.addPlayerToWhitelist(playerName, true)) {
+                        sender.sendMessage(ChatColor.YELLOW + "Added player: " + ChatColor.WHITE + playerName);
+                    } else {
+                        sender.sendMessage(ChatColor.RED + "Failed to add player: " + ChatColor.WHITE + playerName);
+                    }
                 } else {
                     whitelist.add(playerName);
-                    return saveWhitelist();
+                    saveWhitelist();
                 }
             }
         }
-
-        return false;
     }
 
     public boolean printDBUserList(CommandSender sender) {
@@ -336,12 +391,23 @@ public class AutoWhitelist extends JavaPlugin {
                 return sqlConn.removePlayerFromWhitelist(playerName, true);
             }
         } else {
-            for (int i = 0; i < whitelist.size(); i++) {
-                if (playerName.compareToIgnoreCase((String) whitelist.get(i)) != 0) {
-                    continue;
+            if (config.uuidMode()) {
+                User userToRemove = null;
+                for (User u : uuidWhitelist) {
+                    if (u.name.equalsIgnoreCase(playerName)) {
+                        userToRemove = u;
+                        break;
+                    }
                 }
-                whitelist.remove(i);
-                return saveWhitelist();
+                if (userToRemove != null) {
+                    uuidWhitelist.remove(userToRemove);
+                    return true;
+                }
+            } else {
+                if (whitelist.contains(playerName)) {
+                    whitelist.remove(playerName);
+                    return saveWhitelist();
+                }
             }
         }
 
@@ -352,15 +418,28 @@ public class AutoWhitelist extends JavaPlugin {
         return loadWhitelistSettings();
     }
 
-    public String getFormatedAllowList() {
+    public void getFormatedAllowList(CommandSender sender) {
         String result = "";
-        for (String player : whitelist) {
-            if (result.length() > 0) {
-                result = result + ", ";
+        if (config.uuidMode()) {
+            for (User u : uuidWhitelist) {
+                if (result.length() > 0) {
+                    result = result + ", ";
+                }
+                result = result + u.name;
             }
-            result = result + player;
+        } else {
+            for (String player : whitelist) {
+                if (result.length() > 0) {
+                    result = result + ", ";
+                }
+                result = result + player;
+            }
         }
-        return result;
+        if (result.isEmpty()) {
+            sender.sendMessage(ChatColor.YELLOW + "Whitelist is empty.");
+        } else {
+            sender.sendMessage(ChatColor.YELLOW + "Players in " + fileWatcher.fileName + ": " + ChatColor.WHITE + result);
+        }
     }
 
     public boolean isWhitelistActive() {
@@ -385,6 +464,7 @@ public class AutoWhitelist extends JavaPlugin {
     }
 
     public void convertTxtToJson() {
+        loadWhitelist();
         UUIDFetcher fetcher = new UUIDFetcher(whitelist);
         Map<String, UUID> response = null;
         try {
@@ -397,7 +477,7 @@ public class AutoWhitelist extends JavaPlugin {
             for (String pName : response.keySet()) {
                 if (whitelist.contains(pName)) {
                     UUID uuid = response.get(pName);
-                    logInfo("Converting player name '" + pName + "' to UUID: " + uuid);
+                    logInfo("Converting '" + pName + "' to UUID: " + uuid);
                     uuidWhitelist.add(new User(uuid, pName));
                 }
             }
@@ -410,7 +490,8 @@ public class AutoWhitelist extends JavaPlugin {
         } else {
             logDebug("JSON: NOPE");
         }
-        //whitelistFile.renameTo(new File(this.dataFolder, WHITELIST_FILENAME + ".old"));
+        whitelist.clear();
+        whitelistFile.renameTo(new File(this.dataFolder, WHITELIST_FILENAME + ".old"));
     }
 
     public User getPlayerUser(String playerName) {
