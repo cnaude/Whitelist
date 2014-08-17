@@ -46,9 +46,7 @@ public class SqlConnection {
             plugin.logDebug("SqlDriverConnection: " + plugin.getWLConfig().sqlConnection());
             this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
         } catch (SQLException ex) {
-            plugin.logError("SQLException: " + ex.getMessage());
-            plugin.logError("SQLState: " + ex.getSQLState());
-            plugin.logError("VendorError: " + ex.getErrorCode());
+            logSqlException(ex);
             throw ex;
         }
     }
@@ -82,10 +80,7 @@ public class SqlConnection {
             if (bRetry) {
                 return isOnWhitelist(playerName, false);
             }
-
-            plugin.logError("SQLException: " + ex.getMessage());
-            plugin.logError("SQLState: " + ex.getSQLState());
-            plugin.logError("VendorError: " + ex.getErrorCode());
+logSqlException(ex);
         }
         return false;
     }
@@ -107,10 +102,7 @@ public class SqlConnection {
             return true;
         } catch (SQLException ex) {
             this.connection = null;
-
-            plugin.logError("Whitelist: SQLException: " + ex.getMessage());
-            plugin.logError("Whitelist: SQLState: " + ex.getSQLState());
-            plugin.logError("Whitelist: VendorError: " + ex.getErrorCode());
+            logSqlException(ex);
         }
         return false;
     }
@@ -137,10 +129,7 @@ public class SqlConnection {
             return true;
         } catch (SQLException ex) {
             this.connection = null;
-
-            plugin.logError("Whitelist: SQLException: " + ex.getMessage());
-            plugin.logError("Whitelist: SQLState: " + ex.getSQLState());
-            plugin.logError("Whitelist: VendorError: " + ex.getErrorCode());
+            logSqlException(ex);
         }
         return false;
     }
@@ -159,9 +148,7 @@ public class SqlConnection {
                 if (bRetry) {
                     return addPlayerToWhitelist(playerName, false);
                 }
-                plugin.logError("SQLException: " + ex.getMessage());
-                plugin.logError("SQLState: " + ex.getSQLState());
-                plugin.logError("VendorError: " + ex.getErrorCode());
+                logSqlException(ex);
             }
         }
         return false;
@@ -181,13 +168,16 @@ public class SqlConnection {
                 if (bRetry) {
                     return removePlayerFromWhitelist(playerName, false);
                 }
-
-                plugin.logError("SQLException: " + ex.getMessage());
-                plugin.logError("SQLState: " + ex.getSQLState());
-                plugin.logError("VendorError: " + ex.getErrorCode());
+                logSqlException(ex);                
             }
         }
         return false;
+    }
+
+    private void logSqlException(SQLException ex) {
+        plugin.logError("SQLException: " + ex.getMessage());
+        plugin.logError("SQLState: " + ex.getSQLState());
+        plugin.logError("VendorError: " + ex.getErrorCode());
     }
 
 }

@@ -10,6 +10,7 @@ commands:
     usage: |
       /<command> reload - reloads the whitelist and settings
       /<command> add [player(s)] - adds a player to the whitelist
+      /<command> info [player] - display information about player in whitelist
       /<command> remove [player(s)] - removes a player from the whitelist
       /<command> on|off - actives/deactivates whitelist
       /<command> list - list whitelist entries
@@ -26,6 +27,9 @@ permissions:
   whitelist.add:
     default: false
     description: Provides access to add command
+  whitelist.info:
+    default: false
+    description: Provides access to info command
   whitelist.reload:
     default: false
     description: Provides access to reloadcommand
