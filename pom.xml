@@ -35,11 +35,6 @@
             <type>jar</type>
             <scope>provided</scope>
         </dependency>
-        
-        <!--  Gson: Java to Json conversion -->  
-
-        <!-- Following dependency is provided by CraftBukkit -->
-                
     </dependencies>
 
     <build>
