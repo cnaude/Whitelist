@@ -60,13 +60,6 @@
         <!--  Gson: Java to Json conversion -->  
 
         <!-- Following dependency is provided by CraftBukkit -->
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>15.0</version>
-            <type>jar</type>
-            <scope>provided</scope>
-        </dependency>
                 
     </dependencies>
 
