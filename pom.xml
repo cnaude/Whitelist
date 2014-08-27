@@ -51,19 +51,13 @@
     <dependencies>
         <dependency>
             <groupId>com.cnaude.bukkit</groupId>
-            <artifactId>bukkit</artifactId>
+            <artifactId>craftbukkit</artifactId>
             <version>${bukkit.version}</version>
             <type>jar</type>
             <scope>provided</scope>
         </dependency>
         
-        <!--  Gson: Java to Json conversion -->
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.3</version>
-            <scope>compile</scope>
-        </dependency>  
+        <!--  Gson: Java to Json conversion -->  
 
         <!-- Following dependency is provided by CraftBukkit -->
         <dependency>
@@ -106,35 +100,6 @@
                     <target>1.7</target>
                 </configuration>
             </plugin>
-<plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>2.3</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <minimizeJar>true</minimizeJar>
-                            <artifactSet>
-                                <includes>
-                                    <include>com.google.code.gson</include>
-                                </includes>
-                            </artifactSet>
-                            <filters>
-                            </filters>
-                            <relocations>
-                                <relocation>
-                                    <pattern>com.google.code.gson</pattern>
-                                    <shadedPattern>com.google.code.gson</shadedPattern>
-                                </relocation>                                
-                            </relocations>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>   
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <executions>
