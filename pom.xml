@@ -19,27 +19,6 @@
 
     <repositories>
         <repository>
-            <id>sonatype-nexus-public</id>
-            <name>SonaType public snapshots and releases repository</name>
-            <url>https://oss.sonatype.org/content/groups/public</url>
-            <releases> 
-                <!-- set to true if you wish to fetch releases from this repo too. -->
-                <enabled>false</enabled>
-            </releases> 
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <!-- Bukkit -->
-        <repository>
-            <id>bukkit-repo</id>
-            <url>http://repo.bukkit.org/content/groups/public/</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <!-- For anything else without its own repo -->
-        <repository>
             <id>cnaude-repo</id>
             <url>http://cnaude.org/repo/</url>
             <snapshots>
