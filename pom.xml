@@ -24,10 +24,10 @@
             <url>https://oss.sonatype.org/content/groups/public</url>
             <releases> 
                 <!-- set to true if you wish to fetch releases from this repo too. -->
-                <enabled>true</enabled>
+                <enabled>false</enabled>
             </releases> 
             <snapshots>
-                <enabled>true</enabled>
+                <enabled>false</enabled>
             </snapshots>
         </repository>
         <!-- Bukkit -->
@@ -35,7 +35,7 @@
             <id>bukkit-repo</id>
             <url>http://repo.bukkit.org/content/groups/public/</url>
             <snapshots>
-                <enabled>true</enabled>
+                <enabled>false</enabled>
             </snapshots>
         </repository>
         <!-- For anything else without its own repo -->
