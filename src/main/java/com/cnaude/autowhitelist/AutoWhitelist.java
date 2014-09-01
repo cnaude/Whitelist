@@ -376,6 +376,7 @@ public class AutoWhitelist extends JavaPlugin {
                     }
                 } else {
                     whitelist.add(playerName);
+                    sender.sendMessage(ChatColor.YELLOW + "Added player: " + ChatColor.WHITE + playerName);
                     saveWhitelist();
                 }
             }
