@@ -386,11 +386,12 @@ public class AutoWhitelist extends JavaPlugin {
         return false;
     }
 
-    public boolean dumpDBUserList(CommandSender sender) {
+    public void dumpDBUserList(CommandSender sender) {
         if (sqlConn != null) {
-            return sqlConn.dumpDB(sender);
+            sqlConn.dumpDB(sender);
+        } else {
+            sender.sendMessage(ChatColor.RED + "SQL connection is not configured.");
         }
-        return false;
     }
 
     public void removePlayerFromWhitelist(String playerName, CommandSender sender) {
@@ -420,7 +421,7 @@ public class AutoWhitelist extends JavaPlugin {
                     sender.sendMessage(ChatColor.RED + "No such player in whitelist: " + ChatColor.WHITE + playerName);
                 }
             }
-        }        
+        }
     }
 
     public void getUserInfo(String playerName, CommandSender sender) {

@@ -107,7 +107,7 @@ logSqlException(ex);
         return false;
     }
 
-    public boolean dumpDB(CommandSender sender) {
+    public void dumpDB(CommandSender sender) {
         try {
             if (this.connection == null) {
                 this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
@@ -126,12 +126,11 @@ logSqlException(ex);
             plugin.saveWhitelist();
             sender.sendMessage(ChatColor.YELLOW + "Dumped " + ChatColor.WHITE + c + ChatColor.YELLOW
                     + " users to the " + ChatColor.WHITE + "whitelist.txt" + ChatColor.YELLOW + " file.");
-            return true;
         } catch (SQLException ex) {
             this.connection = null;
+            sender.sendMessage(ChatColor.RED + "SQL Error: " + ex.getMessage());
             logSqlException(ex);
         }
-        return false;
     }
 
     public boolean addPlayerToWhitelist(String playerName, boolean bRetry) {
