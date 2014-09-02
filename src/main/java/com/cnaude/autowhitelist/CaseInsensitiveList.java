@@ -17,8 +17,7 @@ public class CaseInsensitiveList extends ArrayList<String> {
         return false;
     }
     
-    @Override
-    public boolean remove(Object o) {
+    public boolean removeString(Object o) {
         String paramStr = (String)o;
         String removeStr = null;
         for (String s : this) {

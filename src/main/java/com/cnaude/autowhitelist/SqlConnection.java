@@ -154,7 +154,8 @@ logSqlException(ex);
         return false;
     }
 
-    public boolean removePlayerFromWhitelist(String playerName, boolean bRetry) {
+    public void removePlayerFromWhitelist(String playerName, CommandSender sender) {
+        boolean success = false;
         if ((plugin.getWLConfig().sqlQueryRemove() != null) && (!plugin.getWLConfig().sqlQueryRemove().isEmpty())) {
             try {
                 if (this.connection == null) {
@@ -162,16 +163,18 @@ logSqlException(ex);
                 }
                 Statement stmt = this.connection.createStatement();
                 stmt.execute(plugin.getWLConfig().sqlQueryRemove().replace("<%USERNAME%>", playerName));
-                return true;
+                success = true;
             } catch (SQLException ex) {
-                this.connection = null;
-                if (bRetry) {
-                    return removePlayerFromWhitelist(playerName, false);
-                }
-                logSqlException(ex);                
+                this.connection = null;                
+                logSqlException(ex);    
+                success = false;
             }
         }
-        return false;
+        if (success) {
+            sender.sendMessage(ChatColor.YELLOW + "Player removed: " + ChatColor.WHITE + playerName);
+        } else {
+            sender.sendMessage(ChatColor.RED + "Error removing player: " + ChatColor.WHITE + playerName);
+        }
     }
 
     private void logSqlException(SQLException ex) {
