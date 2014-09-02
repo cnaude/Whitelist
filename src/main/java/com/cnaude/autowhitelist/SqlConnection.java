@@ -46,7 +46,7 @@ public class SqlConnection {
             plugin.logDebug("SqlDriverConnection: " + plugin.getWLConfig().sqlConnection());
             this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
         } catch (SQLException ex) {
-            logSqlException(ex);
+            logSqlException(ex, plugin.getServer().getConsoleSender());
             throw ex;
         }
     }
@@ -62,7 +62,7 @@ public class SqlConnection {
         }
     }
 
-    public boolean isOnWhitelist(String playerName, boolean bRetry) {
+    public boolean isOnWhitelist(String playerName, CommandSender sender) {
         try {
             if (this.connection == null) {
                 this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
@@ -77,10 +77,7 @@ public class SqlConnection {
             return rst.first();
         } catch (SQLException ex) {
             this.connection = null;
-            if (bRetry) {
-                return isOnWhitelist(playerName, false);
-            }
-logSqlException(ex);
+            logSqlException(ex, sender);
         }
         return false;
     }
@@ -102,7 +99,8 @@ logSqlException(ex);
             return true;
         } catch (SQLException ex) {
             this.connection = null;
-            logSqlException(ex);
+            sender.sendMessage(ChatColor.RED + "SQL Error: " + ex.getMessage());
+            logSqlException(ex, sender);
         }
         return false;
     }
@@ -128,12 +126,12 @@ logSqlException(ex);
                     + " users to the " + ChatColor.WHITE + "whitelist.txt" + ChatColor.YELLOW + " file.");
         } catch (SQLException ex) {
             this.connection = null;
-            sender.sendMessage(ChatColor.RED + "SQL Error: " + ex.getMessage());
-            logSqlException(ex);
+            logSqlException(ex, sender);
         }
     }
 
-    public boolean addPlayerToWhitelist(String playerName, boolean bRetry) {
+    public void addPlayerToWhitelist(String playerName, CommandSender sender) {
+        boolean success = false;
         if ((plugin.getWLConfig().sqlQueryAdd() != null) && (!plugin.getWLConfig().sqlQueryAdd().isEmpty())) {
             try {
                 if (this.connection == null) {
@@ -141,16 +139,18 @@ logSqlException(ex);
                 }
                 Statement stmt = this.connection.createStatement();
                 stmt.execute(plugin.getWLConfig().sqlQueryAdd().replace("<%USERNAME%>", playerName));
-                return true;
+                success = true;
             } catch (SQLException ex) {
                 this.connection = null;
-                if (bRetry) {
-                    return addPlayerToWhitelist(playerName, false);
-                }
-                logSqlException(ex);
+                logSqlException(ex, sender);
+                success = false;
             }
         }
-        return false;
+        if (success) {
+            sender.sendMessage(ChatColor.YELLOW + "Player removed: " + ChatColor.WHITE + playerName);
+        } else {
+            sender.sendMessage(ChatColor.RED + "Error removing player: " + ChatColor.WHITE + playerName);
+        }
     }
 
     public void removePlayerFromWhitelist(String playerName, CommandSender sender) {
@@ -164,8 +164,8 @@ logSqlException(ex);
                 stmt.execute(plugin.getWLConfig().sqlQueryRemove().replace("<%USERNAME%>", playerName));
                 success = true;
             } catch (SQLException ex) {
-                this.connection = null;                
-                logSqlException(ex);    
+                this.connection = null;
+                logSqlException(ex, sender);
                 success = false;
             }
         }
@@ -176,7 +176,8 @@ logSqlException(ex);
         }
     }
 
-    private void logSqlException(SQLException ex) {
+    private void logSqlException(SQLException ex, CommandSender sender) {
+        sender.sendMessage(ChatColor.RED + "SQL Error: " + ex.getMessage());
         plugin.logError("SQLException: " + ex.getMessage());
         plugin.logError("SQLState: " + ex.getSQLState());
         plugin.logError("VendorError: " + ex.getErrorCode());

@@ -42,6 +42,7 @@ public class AutoWhitelist extends JavaPlugin {
     private final String ADD_USAGE = ChatColor.GOLD + "Usage: " + ChatColor.WHITE + "/whitelist add <player(s)>";
     private final String REMOVE_USAGE = ChatColor.GOLD + "Usage: " + ChatColor.WHITE + "/whitelist remove <player(s)>";
     private final String INFO_USAGE = ChatColor.GOLD + "Usage: " + ChatColor.WHITE + "/whitelist info <player>";
+    private final String NO_SQL_CONNECTION = ChatColor.RED + "SQL connection is not configured.";
 
     File whitelistFile;
     File uuidFile;
@@ -316,7 +317,7 @@ public class AutoWhitelist extends JavaPlugin {
         }
 
         if ((config.sqlEnabled()) && (sqlConn != null)) {
-            return sqlConn.isOnWhitelist(playerName, true);
+            return sqlConn.isOnWhitelist(playerName, getServer().getConsoleSender());
         }
 
         return false;
@@ -365,11 +366,7 @@ public class AutoWhitelist extends JavaPlugin {
         } else {
             if (!isOnWhitelist(playerName)) {
                 if ((!config.sqlQueryAdd().isEmpty()) && (sqlConn != null)) {
-                    if (sqlConn.addPlayerToWhitelist(playerName, true)) {
-                        sender.sendMessage(ChatColor.YELLOW + "Added player: " + ChatColor.WHITE + playerName);
-                    } else {
-                        sender.sendMessage(ChatColor.RED + "Failed to add player: " + ChatColor.WHITE + playerName);
-                    }
+                    sqlConn.addPlayerToWhitelist(playerName, sender);                        
                 } else {
                     whitelist.add(playerName);
                     sender.sendMessage(ChatColor.YELLOW + "Added player: " + ChatColor.WHITE + playerName);
@@ -379,18 +376,19 @@ public class AutoWhitelist extends JavaPlugin {
         }
     }
 
-    public boolean printDBUserList(CommandSender sender) {
+    public void printDBUserList(CommandSender sender) {
         if (sqlConn != null) {
-            return sqlConn.printDBUserList(sender);
-        }
-        return false;
+            sqlConn.printDBUserList(sender);
+        } else {
+            sender.sendMessage(NO_SQL_CONNECTION);
+        }    
     }
 
     public void dumpDBUserList(CommandSender sender) {
         if (sqlConn != null) {
             sqlConn.dumpDB(sender);
         } else {
-            sender.sendMessage(ChatColor.RED + "SQL connection is not configured.");
+            sender.sendMessage(NO_SQL_CONNECTION);
         }
     }
 
@@ -398,6 +396,8 @@ public class AutoWhitelist extends JavaPlugin {
         if (!config.sqlQueryRemove().isEmpty() && sqlConn != null) {
             if (isOnWhitelist(playerName)) {
                 sqlConn.removePlayerFromWhitelist(playerName, sender);
+            } else {
+                sender.sendMessage(ChatColor.RED + "No such player in whitelist: " + ChatColor.WHITE + playerName);
             }
         } else {
             if (config.uuidMode()) {
@@ -411,6 +411,8 @@ public class AutoWhitelist extends JavaPlugin {
                 if (userToRemove != null) {
                     uuidWhitelist.remove(userToRemove);
                     sender.sendMessage(ChatColor.YELLOW + "Player removed: " + ChatColor.WHITE + playerName);
+                } else {
+                    sender.sendMessage(ChatColor.RED + "No such player in whitelist: " + ChatColor.WHITE + playerName);
                 }
             } else {
                 if (whitelist.contains(playerName)) {
