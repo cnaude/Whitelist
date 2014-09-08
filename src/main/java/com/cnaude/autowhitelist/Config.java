@@ -135,8 +135,9 @@ public final class Config {
         return whitelistEnabled;
     }
     
-    public void setWhitelistActive(boolean enabled) {
+    public void setWhitelistActive(boolean enabled, AutoWhitelist plug) {
         whitelistEnabled = enabled;
         config.set(ENABLED, whitelistEnabled);
+        plug.saveConfig();
     }
 }

@@ -171,11 +171,11 @@ public class AutoWhitelist extends JavaPlugin {
                 }
                 break;
             case "on":
-                setWhitelistActive(true);
+                setWhitelistActive(true, this);
                 sender.sendMessage(ChatColor.GREEN + "Whitelist activated!");
                 break;
             case "off":
-                setWhitelistActive(false);
+                setWhitelistActive(false, this);
                 sender.sendMessage(ChatColor.RED + "Whitelist deactivated!");
                 break;
             case "dblist":
@@ -479,8 +479,8 @@ public class AutoWhitelist extends JavaPlugin {
         return config.whitelistEnabled();
     }
 
-    public void setWhitelistActive(boolean enabled) {
-        config.setWhitelistActive(enabled);
+    public void setWhitelistActive(boolean enabled, AutoWhitelist plugin) {
+        config.setWhitelistActive(enabled, this);
         
     }
 
