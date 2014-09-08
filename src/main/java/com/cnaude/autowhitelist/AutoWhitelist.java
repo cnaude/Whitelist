@@ -26,7 +26,6 @@ public class AutoWhitelist extends JavaPlugin {
     private final PlayerListener playerListener = new PlayerListener(this);
     private FileWatcher fileWatcher;
     private File dataFolder;
-    private boolean whitelistActive;
     private SqlConnection sqlConn;
     public CaseInsensitiveList whitelist;
     public ArrayList<User> uuidWhitelist;
@@ -52,7 +51,6 @@ public class AutoWhitelist extends JavaPlugin {
         dataFolder = getDataFolder();
         whitelist = new CaseInsensitiveList();
         uuidWhitelist = new ArrayList();
-        whitelistActive = true;
         sqlConn = null;
 
         whitelistFile = new File(dataFolder.getAbsolutePath(), WHITELIST_FILENAME);
@@ -478,11 +476,12 @@ public class AutoWhitelist extends JavaPlugin {
     }
 
     public boolean isWhitelistActive() {
-        return whitelistActive;
+        return config.whitelistEnabled();
     }
 
-    public void setWhitelistActive(boolean isWhitelistActive) {
-        whitelistActive = isWhitelistActive;
+    public void setWhitelistActive(boolean enabled) {
+        config.setWhitelistActive(enabled);
+        
     }
 
     public boolean needReloadWhitelist() {

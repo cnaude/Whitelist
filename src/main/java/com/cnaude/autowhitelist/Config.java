@@ -9,6 +9,7 @@ import org.bukkit.configuration.Configuration;
 public final class Config {
 
     private final Configuration config;
+    private static final String ENABLED = "Enabled";
     private static final String DEBUG_MODE = "DebugMode";
     private static final String UUID_MODE = "UUIDMode";
     private static final String FILE_CHECK_INTERVAL = "FileCheckInterval";
@@ -24,6 +25,7 @@ public final class Config {
     private static final String SQL_QUERY_REMOVE = "SqlQueryRemove";
     private static final String SQL_DRIVER_JAR = "SqlDriverJar";
     
+    private boolean whitelistEnabled;
     private boolean debugMode;
     private boolean uuidMode;
     private long fileCheckInterval;
@@ -47,6 +49,12 @@ public final class Config {
 
     public void loadValues(AutoWhitelist plug) {
         debugMode = config.getBoolean(DEBUG_MODE, false);
+        whitelistEnabled = config.getBoolean(ENABLED, true);
+        if (whitelistEnabled) {
+            plug.logInfo("Whitelist is ON");
+        } else {
+            plug.logInfo("Whitelist is OFF");
+        }
         uuidMode = config.getBoolean(UUID_MODE, false);
         fileCheckInterval = config.getLong(FILE_CHECK_INTERVAL, 1000L);
         kickMessage = plug.colorSet(config.getString(KICK_MESSAGE, "&bSorry! you are not on the &fwhitelist!"));
@@ -121,5 +129,14 @@ public final class Config {
     
     public Long fileCheckInterval() {
         return fileCheckInterval;
+    }
+    
+    public boolean whitelistEnabled() {
+        return whitelistEnabled;
+    }
+    
+    public void setWhitelistActive(boolean enabled) {
+        whitelistEnabled = enabled;
+        config.set(ENABLED, whitelistEnabled);
     }
 }

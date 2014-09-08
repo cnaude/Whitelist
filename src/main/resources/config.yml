@@ -1,3 +1,5 @@
+# Enable or disable whitelist
+Enabled: true
 # Interval, in milliseconds, for checking if whitelist.txt needs to be reloaded.
 FileCheckInterval: 1000
 # Kick message!
