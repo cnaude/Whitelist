@@ -248,6 +248,7 @@ public class AutoWhitelist extends JavaPlugin {
                 sqlConn = null;
             }
         } catch (Exception ex) {
+            logError("Problem creating sql connection: " + ex.getMessage());
             return false;
         }
         return true;
@@ -336,6 +337,11 @@ public class AutoWhitelist extends JavaPlugin {
                 return true;
             }
         }
+
+        if ((config.sqlEnabled()) && (sqlConn != null)) {
+            return sqlConn.isOnWhitelist(user, getServer().getConsoleSender());
+        }
+
         return false;
     }
 
@@ -344,15 +350,14 @@ public class AutoWhitelist extends JavaPlugin {
             @Override
             public void run() {
                 User user = getPlayerUser(playerName, sender);
-                if (user.uuid == null) {
-                    sender.sendMessage(ChatColor.RED + "Invalid player: " + ChatColor.WHITE + playerName);
+                if (sqlConn != null) {
+                    sqlConn.addPlayerToWhitelist(user, sender);
+                } else if (!isOnWhitelist(user)) {
+                    uuidWhitelist.add(user);
+                    saveWhitelist();
+                    sender.sendMessage(ChatColor.YELLOW + "Added player: " + ChatColor.WHITE + playerName + " (" + user.uuid + ")");
                 } else {
-                    if (!isOnWhitelist(user)) {
-                        uuidWhitelist.add(user);
-                        saveWhitelist();
-                        sender.sendMessage(ChatColor.YELLOW + "Added player: "
-                                + ChatColor.WHITE + playerName + " (" + user.uuid + ")");
-                    }
+                    sender.sendMessage(ChatColor.YELLOW + "Player is already in the whitelist: " + ChatColor.WHITE + playerName + " (" + user.uuid + ")");
                 }
             }
         });
@@ -364,7 +369,7 @@ public class AutoWhitelist extends JavaPlugin {
         } else {
             if (!isOnWhitelist(playerName)) {
                 if ((!config.sqlQueryAdd().isEmpty()) && (sqlConn != null)) {
-                    sqlConn.addPlayerToWhitelist(playerName, sender);                        
+                    sqlConn.addPlayerToWhitelist(playerName, sender);
                 } else {
                     whitelist.add(playerName);
                     sender.sendMessage(ChatColor.YELLOW + "Added player: " + ChatColor.WHITE + playerName);
@@ -379,7 +384,7 @@ public class AutoWhitelist extends JavaPlugin {
             sqlConn.printDBUserList(sender);
         } else {
             sender.sendMessage(NO_SQL_CONNECTION);
-        }    
+        }
     }
 
     public void dumpDBUserList(CommandSender sender) {
@@ -391,34 +396,29 @@ public class AutoWhitelist extends JavaPlugin {
     }
 
     public void removePlayerFromWhitelist(String playerName, CommandSender sender) {
-        if (!config.sqlQueryRemove().isEmpty() && sqlConn != null) {
-            if (isOnWhitelist(playerName)) {
-                sqlConn.removePlayerFromWhitelist(playerName, sender);
+        if (config.uuidMode()) {
+            User user = getPlayerUser(playerName, sender);
+            if (sqlConn != null) {
+                sqlConn.removePlayerFromWhitelist(user, sender);
             } else {
-                sender.sendMessage(ChatColor.RED + "No such player in whitelist: " + ChatColor.WHITE + playerName);
-            }
-        } else {
-            if (config.uuidMode()) {
-                User userToRemove = null;
                 for (User u : uuidWhitelist) {
-                    if (u.name.equalsIgnoreCase(playerName)) {
-                        userToRemove = u;
-                        break;
+                    if (u.uuid.equals(user.uuid)) {
+                        logDebug(user.name + ": " + user.uuid + " = " + u.uuid);
+                        uuidWhitelist.remove(u);
+                        return;
                     }
                 }
-                if (userToRemove != null) {
-                    uuidWhitelist.remove(userToRemove);
-                    sender.sendMessage(ChatColor.YELLOW + "Player removed: " + ChatColor.WHITE + playerName);
-                } else {
-                    sender.sendMessage(ChatColor.RED + "No such player in whitelist: " + ChatColor.WHITE + playerName);
-                }
+                sender.sendMessage(ChatColor.YELLOW + "Player is not in the whitelist: " + ChatColor.WHITE + user.name + " (" + user.uuid + ")");
+            }
+        } else {
+            if (sqlConn != null) {
+                sqlConn.removePlayerFromWhitelist(playerName, sender);
             } else {
                 if (whitelist.contains(playerName)) {
-                    whitelist.removeString(playerName);
-                    sender.sendMessage(ChatColor.YELLOW + "Player removed: " + ChatColor.WHITE + playerName);
+                    whitelist.removeString(playerName);                    
                     saveWhitelist();
                 } else {
-                    sender.sendMessage(ChatColor.RED + "No such player in whitelist: " + ChatColor.WHITE + playerName);
+                    sender.sendMessage(ChatColor.YELLOW + "Player is not in the whitelist: " + ChatColor.WHITE + playerName);
                 }
             }
         }
@@ -481,7 +481,7 @@ public class AutoWhitelist extends JavaPlugin {
 
     public void setWhitelistActive(boolean enabled, AutoWhitelist plugin) {
         config.setWhitelistActive(enabled, this);
-        
+
     }
 
     public boolean needReloadWhitelist() {

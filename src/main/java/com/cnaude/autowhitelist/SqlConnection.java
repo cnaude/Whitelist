@@ -82,6 +82,32 @@ public class SqlConnection {
         return false;
     }
 
+    public boolean isOnWhitelist(User user, CommandSender sender) {
+        String playerName = user.name;
+        String uuidStr = user.uuid.toString();
+        plugin.logDebug("p: " + playerName + ", u: " + uuidStr);
+        try {
+            if (this.connection == null) {
+                this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
+            }
+            if (!playerName.matches("[a-zA-Z0-9_]*")) {
+                plugin.logInfo("Whitelist: Illegal characters in player name, disallow!");
+                return false;
+            }
+            Statement stmt = this.connection.createStatement();
+            ResultSet rst = stmt.executeQuery(plugin.getWLConfig().sqlQuery()
+                    .replace("<%USERNAME%>", playerName)
+                    .replace("<%UUID%>", uuidStr)
+            );
+
+            return rst.first();
+        } catch (SQLException ex) {
+            this.connection = null;
+            logSqlException(ex, sender);
+        }
+        return false;
+    }
+
     public boolean printDBUserList(CommandSender sender) {
         try {
             if (this.connection == null) {
@@ -131,20 +157,89 @@ public class SqlConnection {
     }
 
     public void addPlayerToWhitelist(String playerName, CommandSender sender) {
-        boolean success = false;
-        if ((plugin.getWLConfig().sqlQueryAdd() != null) && (!plugin.getWLConfig().sqlQueryAdd().isEmpty())) {
-            try {
-                if (this.connection == null) {
-                    this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
-                }
-                Statement stmt = this.connection.createStatement();
-                stmt.execute(plugin.getWLConfig().sqlQueryAdd().replace("<%USERNAME%>", playerName));
-                success = true;
-            } catch (SQLException ex) {
-                this.connection = null;
-                logSqlException(ex, sender);
-                success = false;
+        if (plugin.getWLConfig().sqlQueryAdd().isEmpty()) {
+            plugin.logError("SqlQueryAdd is empty!");
+            return;
+        }
+        boolean success;
+        try {
+            if (this.connection == null) {
+                this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
             }
+            Statement stmt = this.connection.createStatement();
+            stmt.execute(plugin.getWLConfig().sqlQueryAdd().replace("<%USERNAME%>", playerName));
+            success = isOnWhitelist(playerName, sender);
+        } catch (SQLException ex) {
+            this.connection = null;
+            logSqlException(ex, sender);
+            success = false;
+        }
+        if (success) {
+            sender.sendMessage(ChatColor.YELLOW + "Player added: " + ChatColor.WHITE + playerName);
+        } else {
+            sender.sendMessage(ChatColor.RED + "Error adding player: " + ChatColor.WHITE + playerName);
+        }
+    }
+
+    public void addPlayerToWhitelist(User user, CommandSender sender) {
+        if (plugin.getWLConfig().sqlQueryAdd().isEmpty()) {
+            plugin.logError("SqlQueryAdd is empty!");
+            return;
+        }
+        if (user.uuid == null) {
+            sender.sendMessage(ChatColor.RED + "Invalid player: " + ChatColor.WHITE + user.name);
+            return;
+        }
+        if (isOnWhitelist(user, sender)) {
+            sender.sendMessage(ChatColor.YELLOW + "Player is already in the whitelist: " + ChatColor.WHITE + user.name + " (" + user.uuid + ")");
+            return;
+        }
+        boolean success;
+        try {
+            if (this.connection == null) {
+                this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
+            }
+            Statement stmt = this.connection.createStatement();
+            stmt.execute(plugin.getWLConfig().sqlQueryAdd()
+                    .replace("<%USERNAME%>", user.name)
+                    .replace("<%UUID%>", user.uuid.toString())
+                    .replace("<%OPER%>", user.oper)
+                    .replace("<%TIME%>", String.valueOf(user.time))
+            );
+            success = isOnWhitelist(user, sender);
+        } catch (SQLException ex) {
+            this.connection = null;
+            logSqlException(ex, sender);
+            success = false;
+        }
+        if (success) {
+            sender.sendMessage(ChatColor.YELLOW + "Player added: " + ChatColor.WHITE + user.name + " (" + user.uuid + ")");
+        } else {
+            sender.sendMessage(ChatColor.RED + "Error adding player: " + ChatColor.WHITE + user.name + " (" + user.uuid + ")");
+        }
+    }
+
+    public void removePlayerFromWhitelist(String playerName, CommandSender sender) {
+        if (plugin.getWLConfig().sqlQueryRemove().isEmpty()) {
+            plugin.logError("SqlQueryRemove is empty!");
+            return;
+        }
+        if (!isOnWhitelist(playerName, sender)) {
+            sender.sendMessage(ChatColor.YELLOW + "Player is not in the whitelist: " + ChatColor.WHITE + playerName);
+            return;
+        }
+        boolean success;
+        try {
+            if (this.connection == null) {
+                this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
+            }
+            Statement stmt = this.connection.createStatement();
+            stmt.execute(plugin.getWLConfig().sqlQueryRemove().replace("<%USERNAME%>", playerName));
+            success = (!isOnWhitelist(playerName, sender));
+        } catch (SQLException ex) {
+            this.connection = null;
+            logSqlException(ex, sender);
+            success = false;
         }
         if (success) {
             sender.sendMessage(ChatColor.YELLOW + "Player removed: " + ChatColor.WHITE + playerName);
@@ -153,26 +248,39 @@ public class SqlConnection {
         }
     }
 
-    public void removePlayerFromWhitelist(String playerName, CommandSender sender) {
-        boolean success = false;
-        if ((plugin.getWLConfig().sqlQueryRemove() != null) && (!plugin.getWLConfig().sqlQueryRemove().isEmpty())) {
-            try {
-                if (this.connection == null) {
-                    this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
-                }
-                Statement stmt = this.connection.createStatement();
-                stmt.execute(plugin.getWLConfig().sqlQueryRemove().replace("<%USERNAME%>", playerName));
-                success = true;
-            } catch (SQLException ex) {
-                this.connection = null;
-                logSqlException(ex, sender);
-                success = false;
+    public void removePlayerFromWhitelist(User user, CommandSender sender) {
+        if (plugin.getWLConfig().sqlQueryRemove().isEmpty()) {
+            plugin.logError("SqlQueryRemove is empty!");
+            return;
+        }
+        if (user.uuid == null) {
+            sender.sendMessage(ChatColor.RED + "Invalid player: " + ChatColor.WHITE + user.name);
+            return;
+        }
+        if (!isOnWhitelist(user, sender)) {
+            sender.sendMessage(ChatColor.YELLOW + "Player is not in the whitelist: " + ChatColor.WHITE + user.name + " (" + user.uuid + ")");
+            return;
+        }
+        boolean success;
+        try {
+            if (this.connection == null) {
+                this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
             }
+            Statement stmt = this.connection.createStatement();
+            stmt.execute(plugin.getWLConfig().sqlQueryRemove()
+                    .replace("<%USERNAME%>", user.name)
+                    .replace("<%UUID%>", user.uuid.toString())
+            );
+            success = (!isOnWhitelist(user, sender));
+        } catch (SQLException ex) {
+            this.connection = null;
+            logSqlException(ex, sender);
+            success = false;
         }
         if (success) {
-            sender.sendMessage(ChatColor.YELLOW + "Player removed: " + ChatColor.WHITE + playerName);
+            sender.sendMessage(ChatColor.YELLOW + "Player removed: " + ChatColor.WHITE + user.name + " (" + user.uuid + ")");
         } else {
-            sender.sendMessage(ChatColor.RED + "Error removing player: " + ChatColor.WHITE + playerName);
+            sender.sendMessage(ChatColor.RED + "Error removing player: " + ChatColor.WHITE + user.name + " (" + user.uuid + ")");
         }
     }
 

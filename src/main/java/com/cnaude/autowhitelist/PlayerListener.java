@@ -1,5 +1,6 @@
 package com.cnaude.autowhitelist;
 
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -22,8 +23,9 @@ public class PlayerListener implements Listener {
                 plugin.resetNeedReloadWhitelist();
             }
 
-            String playerName = event.getPlayer().getName();            
-            if (plugin.isOnWhitelist(event.getPlayer())) {
+            String playerName = event.getPlayer().getName(); 
+            Player player = event.getPlayer();
+            if (plugin.isOnWhitelist(player)) {
                 plugin.logInfo("Allowing player: " + playerName);
             } else {
                 plugin.logInfo("Kicking player: " + playerName);                
