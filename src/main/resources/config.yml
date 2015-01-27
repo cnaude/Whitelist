@@ -14,15 +14,17 @@ SqlPass: PASSWORD
 SqlUser: USERNAME
 # Query for determining if a player is in the whitelist
 SqlQuery: "SELECT name FROM tbl_users WHERE name='<%USERNAME%>'"
-#SqlQuery: SELECT name FROM tbl_users WHERE uuid='<%UUID%>'
 # Query for listing users in the database
 SqlQueryList: "SELECT name FROM tbl_users"
 # Query for adding users to the database
 SqlQueryAdd: "INSERT INTO tbl_users (name) VALUES ('<%USERNAME%>')"
-#SqlQueryAdd: INSERT INTO tbl_users (name,uuid,oper,time) VALUES ('<%USERNAME%>','<%UUID%>','<%OPER%>','<%TIME%>')
 # Query for removing users from the database
 SqlQueryRemove: "DELETE FROM tbl_users WHERE Name='<%USERNAME%>'"
-#SqlQueryRemove: DELETE FROM tbl_users WHERE uuid='<%UUID%>'
+#### Example queries for UUID mode ####
+# SqlQuery: SELECT name FROM tbl_users WHERE uuid='<%UUID%>'
+# SqlQueryAdd: INSERT INTO tbl_users (name,uuid,oper,time) VALUES ('<%USERNAME%>','<%UUID%>','<%OPER%>','<%TIME%>')
+# SqlQueryRemove: DELETE FROM tbl_users WHERE uuid='<%UUID%>'
+#######################################
 # Connector
 SqlDriverJar: "lib/mysql-connector-java-bin.jar"
 # Check player UUID instead of name. This will convert txt file to json automatically.
