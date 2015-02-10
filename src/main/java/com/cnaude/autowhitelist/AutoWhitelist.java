@@ -11,7 +11,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.libs.com.google.gson.Gson;
@@ -415,7 +417,7 @@ public class AutoWhitelist extends JavaPlugin {
                 sqlConn.removePlayerFromWhitelist(playerName, sender);
             } else {
                 if (whitelist.contains(playerName)) {
-                    whitelist.removeString(playerName);                    
+                    whitelist.removeString(playerName);
                     saveWhitelist();
                 } else {
                     sender.sendMessage(ChatColor.YELLOW + "Player is not in the whitelist: " + ChatColor.WHITE + playerName);
@@ -529,22 +531,29 @@ public class AutoWhitelist extends JavaPlugin {
     }
 
     public User getPlayerUser(String playerName, CommandSender sender) {
-        ArrayList<String> tmpList = new ArrayList<>();
-        tmpList.add(playerName);
-        UUIDFetcher fetcher = new UUIDFetcher(tmpList);
         UUID uuid = null;
-        Map<String, UUID> response = null;
-        try {
-            response = fetcher.call();
-        } catch (Exception e) {
-            logError("Exception while running UUIDFetcher!");
-            logError(e.getMessage());
-        }
-        if (response != null) {
-            for (String pName : response.keySet()) {
-                if (pName.equalsIgnoreCase(playerName)) {
-                    uuid = response.get(pName);
+        if (Bukkit.getServer().getOnlineMode()) {
+            ArrayList<String> tmpList = new ArrayList<>();
+            tmpList.add(playerName);
+            UUIDFetcher fetcher = new UUIDFetcher(tmpList);
+            Map<String, UUID> response = null;
+            try {
+                response = fetcher.call();
+            } catch (Exception e) {
+                logError("Exception while running UUIDFetcher!");
+                logError(e.getMessage());
+            }
+            if (response != null) {
+                for (String pName : response.keySet()) {
+                    if (pName.equalsIgnoreCase(playerName)) {
+                        uuid = response.get(pName);
+                    }
                 }
+            }
+        } else {
+            OfflinePlayer player = Bukkit.getOfflinePlayer(playerName);
+            if (player != null) {
+                uuid = player.getUniqueId();
             }
         }
         return new User(uuid, playerName, sender.getName());
