@@ -227,10 +227,17 @@ public class AutoWhitelist extends JavaPlugin {
                 Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
                 uuidWhitelist = gson.fromJson(reader, new TypeToken<ArrayList<User>>() {
                 }.getType());
-            }
+            }            
             if (uuidWhitelist == null) {
                 logDebug("Null uuidWhitelist detected. Initializing empty list.");
                 uuidWhitelist = new ArrayList<>();
+            } else if (!uuidWhitelist.isEmpty()) {
+                for (int i = uuidWhitelist.size()-1; i >= 0; i--) {
+                    if (uuidWhitelist.get(i).uuid == null) {
+                        logError("Removing player with null uuid: " + uuidWhitelist.get(i).name);
+                        uuidWhitelist.remove(i);
+                    }
+                }
             }
         } catch (IOException ex) {
             logError(ex.getMessage());
@@ -356,14 +363,18 @@ public class AutoWhitelist extends JavaPlugin {
             @Override
             public void run() {
                 User user = getPlayerUser(playerName, sender);
-                if (sqlConn != null) {
-                    sqlConn.addPlayerToWhitelist(user, sender);
-                } else if (!isOnWhitelist(user)) {
-                    uuidWhitelist.add(user);
-                    saveWhitelist();
-                    sender.sendMessage(ChatColor.YELLOW + "Added player: " + ChatColor.WHITE + playerName + " (" + user.uuid + ")");
+                if (user.uuid != null) {
+                    if (sqlConn != null) {
+                        sqlConn.addPlayerToWhitelist(user, sender);
+                    } else if (!isOnWhitelist(user)) {
+                        uuidWhitelist.add(user);
+                        saveWhitelist();
+                        sender.sendMessage(ChatColor.YELLOW + "Added player: " + ChatColor.WHITE + playerName + " (" + user.uuid + ")");
+                    } else {
+                        sender.sendMessage(ChatColor.YELLOW + "Player is already in the whitelist: " + ChatColor.WHITE + playerName + " (" + user.uuid + ")");
+                    }
                 } else {
-                    sender.sendMessage(ChatColor.YELLOW + "Player is already in the whitelist: " + ChatColor.WHITE + playerName + " (" + user.uuid + ")");
+                    sender.sendMessage(ChatColor.RED + "Invalid player!: " + ChatColor.WHITE + playerName + " (" + user.uuid + ")");
                 }
             }
         });
@@ -404,17 +415,21 @@ public class AutoWhitelist extends JavaPlugin {
     public void removePlayerFromWhitelist(String playerName, CommandSender sender) {
         if (config.uuidMode()) {
             User user = getPlayerUser(playerName, sender);
-            if (sqlConn != null) {
-                sqlConn.removePlayerFromWhitelist(user, sender);
-            } else {
-                for (User u : uuidWhitelist) {
-                    if (u.uuid.equals(user.uuid)) {
-                        logDebug(user.name + ": " + user.uuid + " = " + u.uuid);
-                        uuidWhitelist.remove(u);
-                        return;
+            if (user.uuid != null) {
+                if (sqlConn != null) {
+                    sqlConn.removePlayerFromWhitelist(user, sender);
+                } else {
+                    for (User u : uuidWhitelist) {
+                        if (u.uuid.equals(user.uuid)) {
+                            logDebug(user.name + ": " + user.uuid + " = " + u.uuid);
+                            uuidWhitelist.remove(u);
+                            return;
+                        }
                     }
+                    sender.sendMessage(ChatColor.YELLOW + "Player is not in the whitelist: " + ChatColor.WHITE + user.name + " (" + user.uuid + ")");
                 }
-                sender.sendMessage(ChatColor.YELLOW + "Player is not in the whitelist: " + ChatColor.WHITE + user.name + " (" + user.uuid + ")");
+            } else {
+                sender.sendMessage(ChatColor.RED + "Invalid player!: " + ChatColor.WHITE + playerName + " (" + user.uuid + ")");
             }
         } else {
             if (sqlConn != null) {
