@@ -334,9 +334,13 @@ public class AutoWhitelist extends JavaPlugin {
 
     public boolean isOnWhitelist(User user) {
         for (User u : uuidWhitelist) {
-            if (u.uuid.equals(user.uuid)) {
-                logDebug(user.name + ": " + user.uuid + " = " + u.uuid);
-                return true;
+            logDebug("USER: " + user.uuid);
+            logDebug("U: " + u.uuid);
+            if (u.uuid != null && user.uuid != null) {
+                if (u.uuid.equals(user.uuid)) {
+                    logDebug(user.name + ": " + user.uuid + " = " + u.uuid);
+                    return true;
+                }
             }
         }
 
