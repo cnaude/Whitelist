@@ -32,7 +32,7 @@ public class AutoWhitelist extends JavaPlugin {
     public CaseInsensitiveList whitelist;
     public ArrayList<User> uuidWhitelist;
     private boolean configLoaded = false;
-    static final Logger log = Logger.getLogger("Minecraft");
+    static final Logger LOG = Logger.getLogger("Minecraft");
     public static final String PLUGIN_NAME = "AutoWhitelist";
     public static final String LOG_HEADER = "[" + PLUGIN_NAME + "]";
 
@@ -100,16 +100,16 @@ public class AutoWhitelist extends JavaPlugin {
     }
 
     public void logInfo(String _message) {
-        log.log(Level.INFO, String.format("%s %s", LOG_HEADER, _message));
+        LOG.log(Level.INFO, String.format("%s %s", LOG_HEADER, _message));
     }
 
     public void logError(String _message) {
-        log.log(Level.WARNING, String.format("%s %s", LOG_HEADER, _message));
+        LOG.log(Level.WARNING, String.format("%s %s", LOG_HEADER, _message));
     }
 
     public void logDebug(String _message) {
         if (config.debugMode()) {
-            log.log(Level.INFO, String.format("%s [DEBUG] %s", LOG_HEADER, _message));
+            LOG.log(Level.INFO, String.format("%s [DEBUG] %s", LOG_HEADER, _message));
         }
     }
 
@@ -227,12 +227,12 @@ public class AutoWhitelist extends JavaPlugin {
                 Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
                 uuidWhitelist = gson.fromJson(reader, new TypeToken<ArrayList<User>>() {
                 }.getType());
-            }            
+            }
             if (uuidWhitelist == null) {
                 logDebug("Null uuidWhitelist detected. Initializing empty list.");
                 uuidWhitelist = new ArrayList<>();
             } else if (!uuidWhitelist.isEmpty()) {
-                for (int i = uuidWhitelist.size()-1; i >= 0; i--) {
+                for (int i = uuidWhitelist.size() - 1; i >= 0; i--) {
                     if (uuidWhitelist.get(i).uuid == null) {
                         logError("Removing player with null uuid: " + uuidWhitelist.get(i).name);
                         uuidWhitelist.remove(i);
@@ -383,15 +383,13 @@ public class AutoWhitelist extends JavaPlugin {
     public void addPlayerToWhitelist(String playerName, CommandSender sender) {
         if (config.uuidMode()) {
             asyncUserAdd(playerName, sender);
-        } else {
-            if (!isOnWhitelist(playerName)) {
-                if ((!config.sqlQueryAdd().isEmpty()) && (sqlConn != null)) {
-                    sqlConn.addPlayerToWhitelist(playerName, sender);
-                } else {
-                    whitelist.add(playerName);
-                    sender.sendMessage(ChatColor.YELLOW + "Added player: " + ChatColor.WHITE + playerName);
-                    saveWhitelist();
-                }
+        } else if (!isOnWhitelist(playerName)) {
+            if ((!config.sqlQueryAdd().isEmpty()) && (sqlConn != null)) {
+                sqlConn.addPlayerToWhitelist(playerName, sender);
+            } else {
+                whitelist.add(playerName);
+                sender.sendMessage(ChatColor.YELLOW + "Added player: " + ChatColor.WHITE + playerName);
+                saveWhitelist();
             }
         }
     }
@@ -431,41 +429,45 @@ public class AutoWhitelist extends JavaPlugin {
             } else {
                 sender.sendMessage(ChatColor.RED + "Invalid player!: " + ChatColor.WHITE + playerName + " (" + user.uuid + ")");
             }
+        } else if (sqlConn != null) {
+            sqlConn.removePlayerFromWhitelist(playerName, sender);
+        } else if (whitelist.contains(playerName)) {
+            whitelist.removeString(playerName);
+            saveWhitelist();
         } else {
-            if (sqlConn != null) {
-                sqlConn.removePlayerFromWhitelist(playerName, sender);
-            } else {
-                if (whitelist.contains(playerName)) {
-                    whitelist.removeString(playerName);
-                    saveWhitelist();
-                } else {
-                    sender.sendMessage(ChatColor.YELLOW + "Player is not in the whitelist: " + ChatColor.WHITE + playerName);
-                }
-            }
+            sender.sendMessage(ChatColor.YELLOW + "Player is not in the whitelist: " + ChatColor.WHITE + playerName);
         }
     }
 
     public void getUserInfo(String playerName, CommandSender sender) {
+        boolean onWhitelist = false;
         if (!config.sqlQueryRemove().isEmpty() && sqlConn != null) {
-            if (isOnWhitelist(playerName)) {
-                sender.sendMessage(ChatColor.YELLOW + "Player " + ChatColor.WHITE + playerName
-                        + ChatColor.YELLOW + " is in the whitelist.");
+            onWhitelist = isOnWhitelist(playerName);
+        } else if (config.uuidMode()) {
+            for (User u : uuidWhitelist) {
+                if (u.name.equalsIgnoreCase(playerName)) {
+                    u.getUserInfo(sender);
+                    break;
+                }
             }
         } else {
-            if (config.uuidMode()) {
-                for (User u : uuidWhitelist) {
-                    if (u.name.equalsIgnoreCase(playerName)) {
-                        u.getUserInfo(sender);
-                        break;
-                    }
-                }
-            } else {
-                if (whitelist.contains(playerName)) {
-                    sender.sendMessage(ChatColor.YELLOW + "Player " + ChatColor.WHITE + playerName
-                            + ChatColor.YELLOW + " is in the whitelist.");
-                }
-            }
+            onWhitelist = whitelist.contains(playerName);
         }
+        if (onWhitelist) {
+            whitelistTrueMsg(sender, playerName);
+        } else {
+            whitelistFalseMsg(sender, playerName);
+        }
+    }
+
+    private void whitelistFalseMsg(CommandSender sender, String playerName) {
+        sender.sendMessage(ChatColor.YELLOW + "Player " + ChatColor.WHITE + playerName
+                + ChatColor.YELLOW + " is not in the whitelist.");
+    }
+
+    private void whitelistTrueMsg(CommandSender sender, String playerName) {
+        sender.sendMessage(ChatColor.YELLOW + "Player " + ChatColor.WHITE + playerName
+                + ChatColor.YELLOW + " is in the whitelist.");
     }
 
     public boolean reloadSettings() {
