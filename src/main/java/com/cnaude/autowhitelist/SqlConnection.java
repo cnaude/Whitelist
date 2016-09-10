@@ -64,9 +64,7 @@ public class SqlConnection {
 
     public boolean isOnWhitelist(String playerName, CommandSender sender) {
         try {
-            if (this.connection == null) {
-                this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
-            }
+            connect();
             if (!playerName.matches("[a-zA-Z0-9_]*")) {
                 plugin.logInfo("Whitelist: Illegal characters in player name, disallow!");
                 return false;
@@ -87,9 +85,7 @@ public class SqlConnection {
         String uuidStr = user.uuid.toString();
         plugin.logDebug("p: " + playerName + ", u: " + uuidStr);
         try {
-            if (this.connection == null) {
-                this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
-            }
+            connect();
             if (!playerName.matches("[a-zA-Z0-9_]*")) {
                 plugin.logInfo("Whitelist: Illegal characters in player name, disallow!");
                 return false;
@@ -110,10 +106,7 @@ public class SqlConnection {
 
     public boolean printDBUserList(CommandSender sender) {
         try {
-            if (this.connection == null) {
-                this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
-            }
-
+            connect();
             Statement stmt = this.connection.createStatement();
             ResultSet rst = stmt.executeQuery(plugin.getWLConfig().sqlQueryList());
 
@@ -133,9 +126,7 @@ public class SqlConnection {
 
     public void dumpDB(CommandSender sender) {
         try {
-            if (this.connection == null) {
-                this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
-            }
+            connect();
             Statement stmt = this.connection.createStatement();
             ResultSet rst = stmt.executeQuery(plugin.getWLConfig().sqlQueryList());
 
@@ -163,9 +154,7 @@ public class SqlConnection {
         }
         boolean success;
         try {
-            if (this.connection == null) {
-                this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
-            }
+            connect();
             Statement stmt = this.connection.createStatement();
             stmt.execute(plugin.getWLConfig().sqlQueryAdd().replace("<%USERNAME%>", playerName));
             success = isOnWhitelist(playerName, sender);
@@ -196,9 +185,7 @@ public class SqlConnection {
         }
         boolean success;
         try {
-            if (this.connection == null) {
-                this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
-            }
+            connect();
             Statement stmt = this.connection.createStatement();
             stmt.execute(plugin.getWLConfig().sqlQueryAdd()
                     .replace("<%USERNAME%>", user.name)
@@ -230,9 +217,7 @@ public class SqlConnection {
         }
         boolean success;
         try {
-            if (this.connection == null) {
-                this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
-            }
+            connect();
             Statement stmt = this.connection.createStatement();
             stmt.execute(plugin.getWLConfig().sqlQueryRemove().replace("<%USERNAME%>", playerName));
             success = (!isOnWhitelist(playerName, sender));
@@ -263,9 +248,7 @@ public class SqlConnection {
         }
         boolean success;
         try {
-            if (this.connection == null) {
-                this.connection = DriverManager.getConnection(plugin.getWLConfig().sqlConnection(), plugin.getWLConfig().sqlUsername(), plugin.getWLConfig().sqlPassword());
-            }
+            connect();
             Statement stmt = this.connection.createStatement();
             stmt.execute(plugin.getWLConfig().sqlQueryRemove()
                     .replace("<%USERNAME%>", user.name)
@@ -281,6 +264,21 @@ public class SqlConnection {
             sender.sendMessage(ChatColor.YELLOW + "Player removed: " + ChatColor.WHITE + user.name + " (" + user.uuid + ")");
         } else {
             sender.sendMessage(ChatColor.RED + "Error removing player: " + ChatColor.WHITE + user.name + " (" + user.uuid + ")");
+        }
+    }
+
+    private void connect() throws SQLException {
+        if (this.connection == null) {
+            this.connection = DriverManager.getConnection(
+                    plugin.getWLConfig().sqlConnection(), 
+                    plugin.getWLConfig().sqlUsername(), 
+                    plugin.getWLConfig().sqlPassword());
+        }
+        if (!this.connection.isValid(2)) {
+            this.connection = DriverManager.getConnection(
+                    plugin.getWLConfig().sqlConnection(), 
+                    plugin.getWLConfig().sqlUsername(), 
+                    plugin.getWLConfig().sqlPassword());
         }
     }
 
