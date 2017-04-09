@@ -4,6 +4,8 @@ Enabled: true
 FileCheckInterval: 1000
 # Kick message!
 KickMessage: "&bSorry %NAME%! you are not on the &fwhitelist!"
+# Kick message notification (Set to blank to disable)
+KickMessageNotify: "%NAME% tried to joined the game, but is not on the &fwhitelist!"
 # Enable or disable SQL mode
 SqlEnable: false
 # SQL driver class

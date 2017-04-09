@@ -14,6 +14,7 @@ public final class Config {
     private static final String UUID_MODE = "UUIDMode";
     private static final String FILE_CHECK_INTERVAL = "FileCheckInterval";
     private static final String KICK_MESSAGE = "KickMessage";
+    private static final String KICK_MESSAGE_NOTIFY = "KickMessageNotify";
     private static final String SQL_ENABLE = "SqlEnable";
     private static final String SQL_DRIVER = "SqlDriver";
     private static final String SQL_DRIVER_CONNECTION = "SqlDriverConnection";
@@ -30,6 +31,7 @@ public final class Config {
     private boolean uuidMode;
     private long fileCheckInterval;
     private String kickMessage;      
+    private String kickMessageNotify;
     private boolean sqlEnabled;
     private String sqlDriver;
     private String sqlConnection;
@@ -58,6 +60,7 @@ public final class Config {
         uuidMode = config.getBoolean(UUID_MODE, false);
         fileCheckInterval = config.getLong(FILE_CHECK_INTERVAL, 1000L);
         kickMessage = plug.colorSet(config.getString(KICK_MESSAGE, "&bSorry! you are not on the &fwhitelist!"));
+        kickMessageNotify = plug.colorSet(config.getString(KICK_MESSAGE_NOTIFY, "%NAME% tried to joined the game, but is not on the &fwhitelist!"));
         sqlEnabled = config.getBoolean(SQL_ENABLE, false);
         sqlDriver = config.getString(SQL_DRIVER, "com.mysql.jdbc.Driver");
         sqlConnection = config.getString(SQL_DRIVER_CONNECTION, "jdbc:mysql://localhost/DATABASENAME?user=USERNAME&password=PASSWORD");
@@ -81,6 +84,10 @@ public final class Config {
 
     public String kickMessage() {
         return kickMessage;
+    }
+    
+    public String kickMessageNotify() {
+        return kickMessageNotify;
     }
 
     public boolean sqlEnabled() {

@@ -49,3 +49,6 @@ permissions:
   whitelist.dbdump:
     default: false
     description: Provides access to add command
+  whitelist.notify:
+    default: false
+    description: Receives messages when players attempt to join but get kicked
