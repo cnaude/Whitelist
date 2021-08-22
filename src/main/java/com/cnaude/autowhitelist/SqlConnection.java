@@ -69,7 +69,7 @@ public class SqlConnection {
                 plugin.logInfo("Whitelist: Illegal characters in player name, disallow!");
                 return false;
             }
-            Statement stmt = this.connection.createStatement();
+            Statement stmt = this.connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
             ResultSet rst = stmt.executeQuery(plugin.getWLConfig().sqlQuery().replace("<%USERNAME%>", playerName));
 
             return rst.first();
@@ -90,7 +90,7 @@ public class SqlConnection {
                 plugin.logInfo("Whitelist: Illegal characters in player name, disallow!");
                 return false;
             }
-            Statement stmt = this.connection.createStatement();
+            Statement stmt = this.connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
             ResultSet rst = stmt.executeQuery(plugin.getWLConfig().sqlQuery()
                     .replace("<%USERNAME%>", playerName)
                     .replace("<%UUID%>", uuidStr)
@@ -107,7 +107,7 @@ public class SqlConnection {
     public boolean printDBUserList(CommandSender sender) {
         try {
             connect();
-            Statement stmt = this.connection.createStatement();
+            Statement stmt = this.connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
             ResultSet rst = stmt.executeQuery(plugin.getWLConfig().sqlQueryList());
 
             sender.sendMessage(ChatColor.YELLOW + "Players in whitelist database: ");
@@ -127,7 +127,7 @@ public class SqlConnection {
     public void dumpDB(CommandSender sender) {
         try {
             connect();
-            Statement stmt = this.connection.createStatement();
+            Statement stmt = this.connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
             ResultSet rst = stmt.executeQuery(plugin.getWLConfig().sqlQueryList());
 
             int c = 0;
@@ -155,7 +155,7 @@ public class SqlConnection {
         boolean success;
         try {
             connect();
-            Statement stmt = this.connection.createStatement();
+            Statement stmt = this.connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
             stmt.execute(plugin.getWLConfig().sqlQueryAdd().replace("<%USERNAME%>", playerName));
             success = isOnWhitelist(playerName, sender);
         } catch (SQLException ex) {
@@ -186,7 +186,7 @@ public class SqlConnection {
         boolean success;
         try {
             connect();
-            Statement stmt = this.connection.createStatement();
+            Statement stmt = this.connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
             stmt.execute(plugin.getWLConfig().sqlQueryAdd()
                     .replace("<%USERNAME%>", user.name)
                     .replace("<%UUID%>", user.uuid.toString())
@@ -218,7 +218,7 @@ public class SqlConnection {
         boolean success;
         try {
             connect();
-            Statement stmt = this.connection.createStatement();
+            Statement stmt = this.connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
             stmt.execute(plugin.getWLConfig().sqlQueryRemove().replace("<%USERNAME%>", playerName));
             success = (!isOnWhitelist(playerName, sender));
         } catch (SQLException ex) {
@@ -249,7 +249,7 @@ public class SqlConnection {
         boolean success;
         try {
             connect();
-            Statement stmt = this.connection.createStatement();
+            Statement stmt = this.connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
             stmt.execute(plugin.getWLConfig().sqlQueryRemove()
                     .replace("<%USERNAME%>", user.name)
                     .replace("<%UUID%>", user.uuid.toString())
