@@ -18,13 +18,11 @@
     <url>http://dev.bukkit.org/server-mods/Whitelist/</url>
 
     <repositories>
+        <!-- For anything else without its own repo -->
         <repository>
             <id>cnaude-repo</id>
-            <url>http://cnaude.org/repo/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>     
+            <url>http://repo.chrisnaude.com/</url>
+        </repository>  
     </repositories>
     
     <dependencies>
