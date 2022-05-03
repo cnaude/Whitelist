@@ -35,12 +35,17 @@ public class SqlConnection {
                     }
                 }
                 if (bUseLoader) {
-                    URL url = new URL("jar:file:" + plugin.getWLConfig().sqlDriver() + "!/");
-                    URLClassLoader ucl = new URLClassLoader(new URL[]{url});
+		    File file = new File(plugin.getWLConfig().sqlDriverJar());
+                    plugin.logInfo("Loading driver: " + file.getAbsolutePath());
+                    URL url = file.toURL();
+		    URL[] urls = new URL[]{url};
+                    URLClassLoader ucl = new URLClassLoader(urls);
                     this.proxyDriver = new DriverProxy((Driver) Class.forName(plugin.getWLConfig().sqlDriver(), true, ucl).newInstance());
                     DriverManager.registerDriver(this.proxyDriver);
                 } else {
-                    Class.forName(plugin.getWLConfig().sqlDriver()).newInstance();
+		    String d = plugin.getWLConfig().sqlDriver();
+                    plugin.logDebug("Loading driver: " + d);
+                    Class.forName(d).newInstance();
                 }
             }
             plugin.logDebug("SqlDriverConnection: " + plugin.getWLConfig().sqlConnection());
