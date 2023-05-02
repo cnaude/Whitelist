@@ -11,26 +11,31 @@ public class FileWatcher {
     private final AutoWhitelist plugin;
     private final BukkitTask bt;
     protected final String fileName;
+    private final Config c;
 
-    public FileWatcher(File file, long interval, AutoWhitelist instance) {
+    public FileWatcher(File file, AutoWhitelist instance, Config config) {
         this.plugin = instance;
         this.watchFile = file;
         this.fileName = file.getName();
-        
+        this.c = config;
+
         plugin.logInfo("Watching " + watchFile.getName() + " for changes...");
 
         bt = this.plugin.getServer().getScheduler().runTaskTimerAsynchronously(this.plugin, new Runnable() {
             @Override
             public void run() {
+                plugin.logDebug("Checking " + watchFile.getName() + " for changes.");
                 if (lastModified != watchFile.lastModified()) {
                     lastModified = watchFile.lastModified();
-                    if (!wasFileChanged) {
-                        wasFileChanged = true;
-                        plugin.logInfo("Whitelist file, " + watchFile.getName() + ", was updated. Reloading the file...");
+                    plugin.logInfo("Reloading " + watchFile.getName());
+                    if (plugin.whitelistFile.exists() && !c.uuidMode()) {
+                        plugin.loadWhitelist();
+                    } else if (plugin.uuidFile.exists() && c.uuidMode()) {
+                        plugin.loadUUIDWhitelist();
                     }
                 }
             }
-        }, 0L, interval);
+        }, 0L, config.fileCheckInterval());
     }
 
     /**
@@ -40,11 +45,4 @@ public class FileWatcher {
         bt.cancel();
     }
 
-    public boolean wasFileModified() {
-        return this.wasFileChanged;
-    }
-
-    public void resetFileModifiedState() {
-        this.wasFileChanged = false;
-    }
 }

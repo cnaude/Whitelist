@@ -37,8 +37,8 @@ public class AutoWhitelist extends JavaPlugin {
     public static final String LOG_HEADER = "[" + PLUGIN_NAME + "]";
 
     private final String PERM_ADMIN = "whitelist.admin";
-    private final String WHITELIST_FILENAME = "whitelist.txt";
-    private final String UUID_FILENAME = "whitelist.json";
+    public final String WHITELIST_FILENAME = "whitelist.txt";
+    public final String UUID_FILENAME = "whitelist.json";
 
     private final String ADD_USAGE = ChatColor.GOLD + "Usage: " + ChatColor.WHITE + "/whitelist add <player(s)>";
     private final String REMOVE_USAGE = ChatColor.GOLD + "Usage: " + ChatColor.WHITE + "/whitelist remove <player(s)>";
@@ -84,16 +84,12 @@ public class AutoWhitelist extends JavaPlugin {
         if (whitelistFile.exists() && config.uuidMode()) {
             logInfo("Converting " + WHITELIST_FILENAME + " to " + UUID_FILENAME);
             convertTxtToJson();
-        } else if (whitelistFile.exists() && !config.uuidMode()) {
-            loadWhitelist();
-        } else if (uuidFile.exists() && config.uuidMode()) {
-            loadUUIDWhitelist();
         }
-
+        
         if (config.uuidMode()) {
-            fileWatcher = new FileWatcher(uuidFile, config.fileCheckInterval(), this);
+            fileWatcher = new FileWatcher(uuidFile, this, config);
         } else {
-            fileWatcher = new FileWatcher(whitelistFile, config.fileCheckInterval(), this);
+            fileWatcher = new FileWatcher(whitelistFile, this, config);
         }
 
         getServer().getPluginManager().registerEvents(playerListener, this);
@@ -505,19 +501,6 @@ public class AutoWhitelist extends JavaPlugin {
     public void setWhitelistActive(boolean enabled, AutoWhitelist plugin) {
         config.setWhitelistActive(enabled, this);
 
-    }
-
-    public boolean needReloadWhitelist() {
-        if (fileWatcher != null) {
-            return fileWatcher.wasFileModified();
-        }
-        return false;
-    }
-
-    public void resetNeedReloadWhitelist() {
-        if (fileWatcher != null) {
-            fileWatcher.resetFileModifiedState();
-        }
     }
 
     public void convertTxtToJson() {

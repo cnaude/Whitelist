@@ -1,7 +1,7 @@
 # Enable or disable whitelist
 Enabled: true
 # Interval, in milliseconds, for checking if whitelist.txt needs to be reloaded.
-FileCheckInterval: 1000
+FileCheckInterval: 100
 # Kick message!
 KickMessage: "&bSorry %NAME%! you are not on the &fwhitelist!"
 # Kick message notification (Set to blank to disable)
